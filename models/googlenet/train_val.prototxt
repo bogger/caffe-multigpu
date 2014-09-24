@@ -5,9 +5,9 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/imagenet/ilsvrc12_train_lmdb"
+    source: "/home/common/imagenet/ilsvrc12_train_lmdb"
     backend: LMDB
-    batch_size: 256
+    batch_size: 128 
   }
   transform_param {
     crop_size: 224
@@ -22,7 +22,7 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/imagenet/ilsvrc12_val_lmdb"
+    source: "/home/common/imagenet/ilsvrc12_val_lmdb"
     backend: LMDB
     batch_size: 50
   }
@@ -72,7 +72,7 @@ layers {
     pool: MAX
     kernel_size: 3
     stride: 2
-    pad: 1
+    pad: 0
   }
 }
 layers {
@@ -166,12 +166,12 @@ layers {
     pool: MAX
     kernel_size: 3
     stride: 2
-    pad: 1
+    pad: 0
   }
 }
 # Inception module 1 ***************
 layers {
-  name: icp1_reduction1"
+  name: "icp1_reduction1"
   type: CONVOLUTION
   bottom: "pool2"
   top: "icp1_reduction1"
@@ -370,7 +370,7 @@ layers {
 
 # Inception module 2 ***************
 layers {
-  name: icp2_reduction1"
+  name: "icp2_reduction1"
   type: CONVOLUTION
   bottom: "icp2_in"
   top: "icp2_reduction1"
@@ -575,13 +575,13 @@ layers {
     pool: MAX
     kernel_size: 3
     stride: 2
-    pad: 1
+    pad: 0
   }
 }
 
 # Inception module 3 ***************
 layers {
-  name: icp3_reduction1"
+  name: "icp3_reduction1"
   type: CONVOLUTION
   bottom: "icp3_in"
   top: "icp3_reduction1"
@@ -884,11 +884,12 @@ layers {
   bottom: "cls1_fc2"
   bottom: "label"
   top: "loss1"
+  loss_weight: 0.3
 }
 
 # Inception module 4 ***************
 layers {
-  name: icp4_reduction1"
+  name: "icp4_reduction1"
   type: CONVOLUTION
   bottom: "icp3_out"
   top: "icp4_reduction1"
@@ -1087,7 +1088,7 @@ layers {
 
 # Inception module 5 ***************
 layers {
-  name: icp5_reduction1"
+  name: "icp5_reduction1"
   type: CONVOLUTION
   bottom: "icp4_out"
   top: "icp5_reduction1"
@@ -1286,7 +1287,7 @@ layers {
 
 # Inception module 6 ***************
 layers {
-  name: icp6_reduction1"
+  name: "icp6_reduction1"
   type: CONVOLUTION
   bottom: "icp5_out"
   top: "icp6_reduction1"
@@ -1589,11 +1590,12 @@ layers {
   bottom: "cls2_fc2"
   bottom: "label"
   top: "loss2"
+  loss_weight: 0.3
 }
 
 # Inception module 7 ***************
 layers {
-  name: icp7_reduction1"
+  name: "icp7_reduction1"
   type: CONVOLUTION
   bottom: "icp6_out"
   top: "icp7_reduction1"
@@ -1647,8 +1649,8 @@ layers {
 layers {
   name: "relu_icp7_reduction2"
   type: RELU
-  bottom: "icp2_icp7_reduction2"
-  top: "icp2_icp7_reduction2"
+  bottom: "icp7_reduction2"
+  top: "icp7_reduction2"
 }
 layers {
   name: "icp7_pool"
@@ -1798,12 +1800,12 @@ layers {
     pool: MAX
     kernel_size: 3
     stride: 2
-    pad: 1
+    pad: 0
   }
 }
 # Inception module 8 ***************
 layers {
-  name: icp8_reduction1"
+  name: "icp8_reduction1"
   type: CONVOLUTION
   bottom: "icp8_in"
   top: "icp8_reduction1"
@@ -2002,7 +2004,7 @@ layers {
 
 # Inception module 9 ***************
 layers {
-  name: icp9_reduction1"
+  name: "icp9_reduction1"
   type: CONVOLUTION
   bottom: "icp8_out"
   top: "icp9_reduction1"

@@ -12,3 +12,5 @@ weight_decay: 0.0005
 snapshot: 10000
 snapshot_prefix: "models/googlenet/googlenet_train"
 solver_mode: GPU
+device_id: 3
+test_initialization: true
