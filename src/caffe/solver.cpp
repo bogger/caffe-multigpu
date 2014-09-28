@@ -190,7 +190,8 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     }
 
     const bool display = param_.display() && iter_ % param_.display() == 0;
-    net_->set_debug_info(display && param_.debug_info());
+    const bool debug_display = param_.debug_info() && iter_ % param_.debug_display() == 0;
+    net_->set_debug_info(debug_display);
 
     // added for allowing bigger batch size
     Dtype loss = 0;

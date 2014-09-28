@@ -49,7 +49,7 @@ layers {
     pad: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.015
     }
     bias_filler {
       type: "constant"
@@ -102,7 +102,7 @@ layers {
     group: 2
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -132,7 +132,7 @@ layers {
     group: 2
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.02
     }
     bias_filler {
       type: "constant"
@@ -185,7 +185,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -214,7 +214,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -256,7 +256,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -285,7 +285,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -314,7 +314,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -343,7 +343,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -384,7 +384,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -413,7 +413,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -455,7 +455,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -484,7 +484,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -513,7 +513,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -542,7 +542,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -595,7 +595,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -624,7 +624,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -666,7 +666,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -695,7 +695,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -724,7 +724,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -753,7 +753,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -807,7 +807,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -903,7 +903,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -932,7 +932,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -974,7 +974,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1003,7 +1003,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -1032,7 +1032,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -1061,7 +1061,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1102,7 +1102,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1131,7 +1131,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1173,7 +1173,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1202,7 +1202,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -1231,7 +1231,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -1260,7 +1260,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1301,7 +1301,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1330,7 +1330,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1372,7 +1372,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1401,7 +1401,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -1430,7 +1430,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -1459,7 +1459,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1491,7 +1491,7 @@ layers {
   bottom: "icp6_out"
   top: "cls2_pool"
   pooling_param {
-    pool: MAX
+    pool: AVE
     kernel_size: 5
     stride: 3
     pad: 0
@@ -1513,7 +1513,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1609,7 +1609,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1638,7 +1638,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1680,7 +1680,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1709,7 +1709,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -1738,7 +1738,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -1767,7 +1767,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1819,7 +1819,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1848,7 +1848,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1890,7 +1890,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -1919,7 +1919,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -1948,7 +1948,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -1977,7 +1977,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -2018,7 +2018,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -2047,7 +2047,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -2089,7 +2089,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -2118,7 +2118,7 @@ layers {
     kernel_size: 3
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.04
     }
     bias_filler {
       type: "constant"
@@ -2147,7 +2147,7 @@ layers {
     kernel_size: 5
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.08
     }
     bias_filler {
       type: "constant"
@@ -2176,7 +2176,7 @@ layers {
     kernel_size: 1
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.1
     }
     bias_filler {
       type: "constant"
@@ -2208,7 +2208,7 @@ layers {
   bottom: "icp9_out"
   top: "cls3_pool"
   pooling_param {
-    pool: MAX
+    pool: AVE
     kernel_size: 7
     stride: 1
     pad: 0
