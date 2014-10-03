@@ -3,6 +3,10 @@
 #include "caffe/syncedmem.hpp"
 #include "caffe/util/math_functions.hpp"
 
+#if USE_MPI
+#include <mpi.h>
+#endif
+
 namespace caffe {
 
 template <typename Dtype>
@@ -21,7 +25,13 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
     capacity_ = count_;
     data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
     diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
+#ifdef USE_MPI
+    int all_proc;
+    MPI_Comm_size(MPI_COMM_WORLD, &all_proc);
+    mpi_holding_.reset(new SyncedMemory(capacity_ * sizeof(Dtype) * all_proc));
+#else
     mpi_holding_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
+#endif
   }
 }
 

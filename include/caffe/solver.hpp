@@ -89,6 +89,10 @@ class SGDSolver : public Solver<Dtype> {
   //   of gradients/updates and is not needed in snapshots
   vector<shared_ptr<Blob<Dtype> > > history_, update_, temp_;
 
+#ifdef USE_MPI
+  Blob<Dtype>  reducer_;
+#endif
+
   DISABLE_COPY_AND_ASSIGN(SGDSolver);
 };
 

@@ -402,6 +402,11 @@ void SGDSolver<Dtype>::PreSolve() {
         net_param->num(), net_param->channels(), net_param->height(),
         net_param->width())));
   }
+#ifdef USE_MPI
+  int all_proc;
+  MPI_Comm_size(MPI_COMM_WORLD, &all_proc);
+  reducer_.Reshape(all_proc, 1, 1, 1);
+#endif
 }
 
 
@@ -456,23 +461,66 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
     break;
   case Caffe::GPU:
 #ifndef CPU_ONLY
-    for (int param_id = 0; param_id < net_params.size(); ++param_id) {
-      // Compute the value to history, and then copy them to the blob's diff.
+
 
 #ifdef USE_MPI
-    	double mpi_start, mpi_end;
-    // Here we will communicate between porcesses and add all diffs
-    	mpi_start = MPI_Wtime();
-    	MPI_Allreduce(net_params[param_id]->cpu_diff(),
-    			net_params[param_id]->mutable_cpu_mpi_holding(),
-    			net_params[param_id]->count(),
-    			MPI_FLOAT,
-    			MPI_SUM,
-    			MPI_COMM_WORLD);
-    	caffe_copy(net_params[param_id]->count(), net_params[param_id]->gpu_mpi_holding(), net_params[param_id]->mutable_gpu_diff());
-    	mpi_end = MPI_Wtime();
-//    	LOG(INFO)<<"MPI Call: "<<mpi_end-mpi_start<<" seconds";
+		double mpi_start, mpi_end;
+		int root, myrank, all_proc;
+		Dtype* gather_buffer;
+		MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+		MPI_Comm_size(MPI_COMM_WORLD, &all_proc);
+		mpi_start = MPI_Wtime();
+		MPI_Request req[512];
+		CUDA_CHECK(cudaDeviceSynchronize());
+		for (int param_id = 0; param_id < net_params.size(); ++param_id) {
+
+
+			root = 0;
+
+
+			gather_buffer = net_params[param_id]->mutable_gpu_mpi_holding();
+
+//    	MPI_Allreduce(net_params[param_id]->cpu_diff(),
+//    			net_params[param_id]->mutable_cpu_mpi_holding(),
+//    			net_params[param_id]->count(),
+//    			MPI_FLOAT,
+//    			MPI_SUM,
+//    			MPI_COMM_WORLD);
+//    	caffe_copy(net_params[param_id]->count(), net_params[param_id]->gpu_mpi_holding(), net_params[param_id]->mutable_gpu_diff());
+
+			//First, gather all parameters to the root GPU
+			CHECK_EQ(
+					MPI_Gather( (Dtype*)net_params[param_id]->gpu_diff(), net_params[param_id]->count(), MPI_FLOAT, gather_buffer, net_params[param_id]->count(), MPI_FLOAT, root, MPI_COMM_WORLD ),
+					MPI_SUCCESS);
+			if (myrank == 0) {
+				//On root process, reduce the diff on GPU
+				Dtype* cpu_reducer = reducer_.mutable_cpu_data();
+				for (int i = 0; i < all_proc; i++) {
+					cpu_reducer[i] = Dtype(1.);
+				}
+				caffe_gpu_gemv<Dtype>(CblasTrans, all_proc,
+						net_params[param_id]->count(), (Dtype) 1.,
+						gather_buffer, reducer_.gpu_data(), (Dtype) 0.,
+						net_params[param_id]->mutable_gpu_diff());
+			}
+
+		}
+		CUDA_CHECK(cudaDeviceSynchronize());
+		for (int param_id = 0; param_id < net_params.size(); ++param_id) {
+			//Async broadcast aggregated diff
+			CHECK_EQ(
+					MPI_Ibcast( net_params[param_id]->mutable_gpu_diff(), net_params[param_id]->count(), MPI_FLOAT, root, MPI_COMM_WORLD, &req[param_id] ),
+					MPI_SUCCESS);
+		}
+		mpi_end = MPI_Wtime();
+//	  LOG(INFO)<<"MPI Call: "<<mpi_end-mpi_start<<" seconds";
 #endif
+    	for (int param_id = 0; param_id < net_params.size(); ++param_id) {
+#ifdef USE_MPI
+    		//Wait for the corresponding broadcast to finish.
+    		MPI_Wait(&req[param_id], MPI_STATUS_IGNORE);
+#endif
+      // Compute the value to history, and then copy them to the blob's diff.
       Dtype local_rate = rate * net_params_lr[param_id];
       Dtype local_decay = weight_decay * net_params_weight_decay[param_id];
 
