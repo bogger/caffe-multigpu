@@ -12,6 +12,10 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
 
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
+
 namespace caffe {
 
 template <typename Dtype>
@@ -74,6 +78,55 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   }
 
   // Check if we would need to randomly skip a few data points
+#ifdef USE_MPI
+	int all_rank, my_rank, mpi_step_size;
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &all_rank);
+	unsigned int skip;
+	if (this->layer_param_.data_param().rand_skip()) {
+		skip = caffe_rng_rand() %
+				this->layer_param_.data_param().rand_skip();
+	}else{
+		skip = 0;
+	}
+	LOG(INFO) << "Skipping first " << skip << " data points.";
+	switch (this->layer_param_.data_param().backend()) {
+		case DataParameter_DB_LEVELDB:
+		//No idea how to set process skip for leveldb. it doesn't support db stats
+		break;
+		case DataParameter_DB_LMDB:
+		//Get the db size, split it into $(all_rank) parts by skiping corresponding items
+			MDB_stat stats;
+			mdb_env_stat(mdb_env_, &stats);
+			mpi_step_size = stats.ms_entries / all_rank;
+			skip += my_rank*mpi_step_size;
+			LOG(INFO)<<"mpi rank skipping "<< skip;
+
+		break;
+		default:
+			LOG(FATAL) << "Unknown database backend";
+	}
+	while (skip-- > 0) {
+		switch (this->layer_param_.data_param().backend()) {
+			case DataParameter_DB_LEVELDB:
+			iter_->Next();
+			if (!iter_->Valid()) {
+				iter_->SeekToFirst();
+			}
+			break;
+			case DataParameter_DB_LMDB:
+			if (mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_, MDB_NEXT)
+					!= MDB_SUCCESS) {
+				CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_,
+								MDB_FIRST), MDB_SUCCESS);
+			}
+			break;
+			default:
+			LOG(FATAL) << "Unknown database backend";
+		}
+	}
+	MPI_Barrier(MPI_COMM_WORLD); // wait for other process to finish running to start location
+#else
   if (this->layer_param_.data_param().rand_skip()) {
     unsigned int skip = caffe_rng_rand() %
                         this->layer_param_.data_param().rand_skip();
@@ -98,6 +151,7 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       }
     }
   }
+#endif
   // Read a data point, and use it to initialize the top blob.
   Datum datum;
   switch (this->layer_param_.data_param().backend()) {

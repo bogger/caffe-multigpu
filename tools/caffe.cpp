@@ -296,7 +296,11 @@ int main(int argc, char** argv) {
   caffe::GlobalInit(&argc, &argv);
 
 #ifdef USE_MPI
-  FLAGS_gpu = my_rank;
+//  FLAGS_gpu = my_rank;
+  switch (my_rank){
+  case 0: FLAGS_gpu=0;break;
+  case 1: FLAGS_gpu=2;break;
+  }
   LOG(INFO)<<FLAGS_gpu;
 #endif
   if (argc == 2) {
