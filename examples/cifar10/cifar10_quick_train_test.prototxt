@@ -6,8 +6,8 @@ layers {
   top: "label"
   data_param {
     source: "examples/cifar10/cifar-train-leveldb"
-    batch_size: 50
-    mpi_skip_step: 25000
+    batch_size: 40
+    mpi_skip_step: 20000
   }
   transform_param {
     mean_file: "examples/cifar10/mean.binaryproto"
