@@ -46,12 +46,25 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     leveldb::DB* db_temp;
     leveldb::Options options = GetLevelDBOptions();
     options.create_if_missing = false;
+#ifdef USE_MPI
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    string rank_str = static_cast<ostringstream*>(&(ostringstream()<<myrank))->str();
+    LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().source()+rank_str;
+        leveldb::Status status = leveldb::DB::Open(
+            options, this->layer_param_.data_param().source()+rank_str, &db_temp);
+        CHECK(status.ok()) << "Failed to open leveldb "
+                           << this->layer_param_.data_param().source() << std::endl
+                           << status.ToString();
+#else
     LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().source();
-    leveldb::Status status = leveldb::DB::Open(
-        options, this->layer_param_.data_param().source(), &db_temp);
-    CHECK(status.ok()) << "Failed to open leveldb "
-                       << this->layer_param_.data_param().source() << std::endl
-                       << status.ToString();
+        leveldb::Status status = leveldb::DB::Open(
+            options, this->layer_param_.data_param().source(), &db_temp);
+        CHECK(status.ok()) << "Failed to open leveldb "
+                           << this->layer_param_.data_param().source() << std::endl
+                           << status.ToString();
+#endif
+
     db_.reset(db_temp);
     iter_.reset(db_->NewIterator(leveldb::ReadOptions()));
     iter_->SeekToFirst();
@@ -93,6 +106,8 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 	switch (this->layer_param_.data_param().backend()) {
 		case DataParameter_DB_LEVELDB:
 		//No idea how to set process skip for leveldb. it doesn't support db stats
+			skip = this->layer_param_.data_param().mpi_skip_step()*my_rank;
+			LOG(INFO)<<"mpi rank skipping "<< skip;
 		break;
 		case DataParameter_DB_LMDB:
 		//Get the db size, split it into $(all_rank) parts by skiping corresponding items

@@ -428,6 +428,7 @@ message DataParameter {
   // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
   // data.
   optional bool mirror = 6 [default = false];
+  optional uint32 mpi_skip_step = 15 [default=0];
 }
 
 // Message that stores parameters used by DropoutLayer
