@@ -39,6 +39,11 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   if (param_.random_seed() >= 0) {
     Caffe::set_random_seed(param_.random_seed());
   }
+  // added for allowing bigger batch size
+  if (!param_.has_update_interval() || param_.update_interval() == 1)
+    Caffe::set_accumulate(false);
+  else
+    Caffe::set_accumulate(true);
   // Scaffolding code
   InitTrainNet();
   InitTestNets();
@@ -208,8 +213,26 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     }
 
     const bool display = param_.display() && iter_ % param_.display() == 0;
+
     net_->set_debug_info(display && param_.debug_info());
-    Dtype loss = net_->ForwardBackward(bottom_vec);
+//    Dtype loss = net_->ForwardBackward(bottom_vec);
+
+    const bool debug_display = param_.debug_info() && iter_ % param_.debug_display() == 0;
+    net_->set_debug_info(debug_display);
+
+    // added for allowing bigger batch size
+    Dtype loss = 0;
+    if ( !Caffe::accumulate() )
+      loss = net_->ForwardBackward(bottom_vec);
+    else{
+      for (int acum_num = 0; acum_num < param_.update_interval() - 1; ++acum_num){
+        loss += net_->ForwardBackward(bottom_vec);
+        net_->AccumulateDiff();
+      }
+      loss += net_->ForwardBackward(bottom_vec);
+      net_->UpdateDiff();
+      loss /= Dtype(param_.update_interval());
+    }
 #ifdef USE_MPI
 
     if (myrank==0){
