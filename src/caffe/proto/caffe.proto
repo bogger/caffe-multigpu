@@ -140,6 +140,8 @@ message SolverParameter {
   // random number generator -- useful for reproducible results. Otherwise,
   // (and by default) initialize using a seed derived from the system clock.
   optional int64 random_seed = 20 [default = -1];
+  // added to allow big batch_size
+  optional int32 update_interval = 33 [default = 1];
 
   // Solver type
   enum SolverType {
@@ -154,6 +156,7 @@ message SolverParameter {
   // If true, print information about the state of the net that may help with
   // debugging learning problems.
   optional bool debug_info = 23 [default = false];
+  optional int32 debug_display = 40;
 
   // If false, don't save a snapshot after training finishes.
   optional bool snapshot_after_train = 28 [default = true];
