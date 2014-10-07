@@ -43,6 +43,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   InitTrainNet();
   InitTestNets();
   LOG(INFO) << "Solver scaffolding done.";
+
 }
 
 template <typename Dtype>
@@ -163,7 +164,10 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   Caffe::set_phase(Caffe::TRAIN);
   LOG(INFO) << "Solving " << net_->name();
   PreSolve();
-
+#ifdef USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &myrank_);
+  MPI_Comm_size(MPI_COMM_WORLD, &all_proc_);
+#endif
   iter_ = 0;
   if (resume_file) {
     LOG(INFO) << "Restoring previous solver status from " << resume_file;
@@ -178,10 +182,25 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   vector<Blob<Dtype>*> bottom_vec;
   for (; iter_ < param_.max_iter(); ++iter_) {
     // Save a snapshot if needed.
+#ifndef USE_MPI
     if (param_.snapshot() && iter_ > start_iter &&
         iter_ % param_.snapshot() == 0) {
       Snapshot();
     }
+#else
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    if (param_.snapshot() && iter_ > start_iter &&
+            iter_ % param_.snapshot() == 0) {
+    	if (myrank == 0){
+          Snapshot();
+          MPI_Barrier(MPI_COMM_WORLD);
+    	}else{
+    		MPI_Barrier(MPI_COMM_WORLD);
+    	}
+    }
+#endif
 
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
@@ -192,8 +211,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     net_->set_debug_info(display && param_.debug_info());
     Dtype loss = net_->ForwardBackward(bottom_vec);
 #ifdef USE_MPI
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
     if (myrank==0){
 #endif
     if (display) {
@@ -257,8 +275,16 @@ void Solver<Dtype>::TestAll() {
 
 template <typename Dtype>
 void Solver<Dtype>::Test(const int test_net_id) {
+#ifndef USE_MPI
   LOG(INFO) << "Iteration " << iter_
             << ", Testing net (#" << test_net_id << ")";
+#else
+
+  if (myrank_ == 0){
+	  LOG(INFO) << "Iteration " << iter_
+	              << ", Testing net (#" << test_net_id << ")";
+  }
+#endif
   // We need to set phase to test before running.
   Caffe::set_phase(Caffe::TEST);
   CHECK_NOTNULL(test_nets_[test_net_id].get())->
@@ -294,8 +320,22 @@ void Solver<Dtype>::Test(const int test_net_id) {
     }
   }
   if (param_.test_compute_loss()) {
+#ifndef USE_MPI
     loss /= param_.test_iter(test_net_id);
     LOG(INFO) << "Test loss: " << loss;
+#else
+    loss /= param_.test_iter(test_net_id);
+    if(myrank_ == 0){
+    	MPI_Reduce(MPI_IN_PLACE, &loss, 1, MPI_INT,
+    			MPI_SUM, 0, MPI_COMM_WORLD);
+    	loss /= all_proc_;
+    	LOG(INFO) << "Test loss: " << loss;
+    }else{
+    	MPI_Reduce(&loss, &loss, 1, MPI_INT,
+    			MPI_SUM, 0, MPI_COMM_WORLD);
+    }
+
+#endif
   }
   for (int i = 0; i < test_score.size(); ++i) {
     const int output_blob_index =
@@ -303,6 +343,8 @@ void Solver<Dtype>::Test(const int test_net_id) {
     const string& output_name = test_net->blob_names()[output_blob_index];
     const Dtype loss_weight = test_net->blob_loss_weights()[output_blob_index];
     ostringstream loss_msg_stream;
+
+#ifndef USE_MPI
     const Dtype mean_score = test_score[i] / param_.test_iter(test_net_id);
     if (loss_weight) {
       loss_msg_stream << " (* " << loss_weight
@@ -310,6 +352,24 @@ void Solver<Dtype>::Test(const int test_net_id) {
     }
     LOG(INFO) << "    Test net output #" << i << ": " << output_name << " = "
         << mean_score << loss_msg_stream.str();
+#else
+
+    Dtype mean_score = test_score[i] / param_.test_iter(test_net_id);
+    if( myrank_ == 0 ){
+    	MPI_Reduce(MPI_IN_PLACE, &mean_score, 1, MPI_FLOAT, MPI_SUM,
+    	    			0, MPI_COMM_WORLD);
+    	mean_score /= all_proc_;
+    	if (loss_weight) {
+    	      loss_msg_stream << " (* " << loss_weight
+    	                      << " = " << loss_weight * mean_score << " loss)";
+    	    }
+    	    LOG(INFO) << "    Test net output #" << i << ": " << output_name << " = "
+    	        << mean_score << loss_msg_stream.str();
+    }else{
+    	MPI_Reduce(&mean_score, &mean_score, 1, MPI_FLOAT, MPI_SUM,
+    			0, MPI_COMM_WORLD);
+    }
+#endif
   }
   Caffe::set_phase(Caffe::TRAIN);
 }
@@ -417,9 +477,15 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
   vector<float>& net_params_weight_decay = this->net_->params_weight_decay();
   // get the learning rate
   Dtype rate = GetLearningRate();
-//  if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
-//    LOG(INFO) << "Iteration " << this->iter_ << ", lr = " << rate;
-//  }
+#ifndef USE_MPI
+  if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
+    LOG(INFO) << "Iteration " << this->iter_ << ", lr = " << rate;
+  }
+#else
+  if (this->myrank_ == 0 && this->param_.display() && this->iter_ % this->param_.display() == 0) {
+      LOG(INFO) << "Iteration " << this->iter_ << ", lr = " << rate;
+    }
+#endif
   Dtype momentum = this->param_.momentum();
   Dtype weight_decay = this->param_.weight_decay();
   string regularization_type = this->param_.regularization_type();
@@ -461,7 +527,7 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
     break;
   case Caffe::GPU:
 #ifndef CPU_ONLY
-
+	  CUDA_CHECK(cudaDeviceSynchronize());
 	  for (int param_id = 0; param_id < net_params.size(); ++param_id) {
 	      		//Wait for the corresponding broadcast to finish.
 #ifdef USE_MPI
@@ -471,7 +537,7 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
 //		MPI_Comm_size(MPI_COMM_WORLD, &all_proc);
 //		mpi_start = MPI_Wtime();
 
-		CUDA_CHECK(cudaDeviceSynchronize());
+
 
 
 		CHECK_EQ(MPI_Allreduce(MPI_IN_PLACE,

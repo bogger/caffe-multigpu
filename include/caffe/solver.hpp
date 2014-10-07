@@ -59,6 +59,11 @@ class Solver {
   shared_ptr<Net<Dtype> > net_;
   vector<shared_ptr<Net<Dtype> > > test_nets_;
 
+#ifdef USE_MPI
+  int myrank_;
+  int all_proc_;
+#endif
+
   DISABLE_COPY_AND_ASSIGN(Solver);
 };
 
