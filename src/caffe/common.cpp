@@ -5,6 +5,10 @@
 #include "caffe/common.hpp"
 #include "caffe/util/rng.hpp"
 
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
+
 namespace caffe {
 
 shared_ptr<Caffe> Caffe::singleton_;
@@ -35,6 +39,14 @@ void GlobalInit(int* pargc, char*** pargv) {
   ::gflags::ParseCommandLineFlags(pargc, pargv, true);
   // Google logging.
   ::google::InitGoogleLogging(*(pargv)[0]);
+
+#ifdef USE_MPI
+  int rank, all_rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &all_rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  Caffe::set_mpi_self_rank(rank);
+  Caffe::set_mpi_all_rank(all_rank);
+#endif
 }
 
 #ifdef CPU_ONLY  // CPU-only Caffe.

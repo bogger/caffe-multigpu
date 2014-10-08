@@ -222,6 +222,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
 
     // added for allowing bigger batch size
     Dtype loss = 0;
+//    LOG(INFO)<<Caffe::accumulate();
     if ( !Caffe::accumulate() )
       loss = net_->ForwardBackward(bottom_vec);
     else{
@@ -235,14 +236,50 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     }
 #ifdef USE_MPI
 
-    if (myrank==0){
-#endif
+    MPI_Allreduce(MPI_IN_PLACE, &loss, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+//    LOG(INFO)<<loss;
+    loss /= all_proc_;
+    if (myrank_==0){
+    	if (display) {
+    	      LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;
+    	      const vector<Blob<Dtype>*>& result = net_->output_blobs();
+    	      int score_index = 0;
+    	      for (int j = 0; j < result.size(); ++j) {
+    	        Dtype* result_vec = result[j]->mutable_cpu_data();
+    	        MPI_Allreduce(MPI_IN_PLACE, result_vec, result[j]->count(), MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    	        const string& output_name =
+    	            net_->blob_names()[net_->output_blob_indices()[j]];
+    	        const Dtype loss_weight =
+    	            net_->blob_loss_weights()[net_->output_blob_indices()[j]];
+    	        for (int k = 0; k < result[j]->count(); ++k) {
+    	          ostringstream loss_msg_stream;
+    	          if (loss_weight) {
+    	            loss_msg_stream << " (* " << loss_weight
+    	                            << " = " << loss_weight * result_vec[k]/all_proc_ << " loss)";
+    	          }
+    	          LOG(INFO) << "    Train net output #"
+    	              << score_index++ << ": " << output_name << " = "
+    	              << result_vec[k]/all_proc_ << loss_msg_stream.str();
+    	        }
+    	      }
+    	    }
+    }else{
+    	if (display) {
+    		const vector<Blob<Dtype>*>& result = net_->output_blobs();
+
+    		    	      for (int j = 0; j < result.size(); ++j) {
+    		    	        Dtype* result_vec = result[j]->mutable_cpu_data();
+    		    	        MPI_Allreduce(MPI_IN_PLACE, result_vec, result[j]->count(), MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    		    	      }
+    	}
+    }
+#else
     if (display) {
       LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;
       const vector<Blob<Dtype>*>& result = net_->output_blobs();
       int score_index = 0;
       for (int j = 0; j < result.size(); ++j) {
-        const Dtype* result_vec = result[j]->cpu_data();
+        Dtype* result_vec = result[j]->mutable_cpu_data();
         const string& output_name =
             net_->blob_names()[net_->output_blob_indices()[j]];
         const Dtype loss_weight =
@@ -258,8 +295,6 @@ void Solver<Dtype>::Solve(const char* resume_file) {
               << result_vec[k] << loss_msg_stream.str();
         }
       }
-    }
-#ifdef USE_MPI
     }
 #endif
 
@@ -508,9 +543,10 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
   if (this->myrank_ == 0 && this->param_.display() && this->iter_ % this->param_.display() == 0) {
       LOG(INFO) << "Iteration " << this->iter_ << ", lr = " << rate;
     }
+  rate /= Dtype(this->param_.update_interval());
 #endif
   Dtype momentum = this->param_.momentum();
-  Dtype weight_decay = this->param_.weight_decay();
+  Dtype weight_decay = this->param_.weight_decay()  * Dtype(this->param_.update_interval());
   string regularization_type = this->param_.regularization_type();
   switch (Caffe::mode()) {
   case Caffe::CPU:
@@ -563,15 +599,18 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
 
 
 
-		CHECK_EQ(MPI_Allreduce(MPI_IN_PLACE,
+		MPI_Allreduce(MPI_IN_PLACE,
 					net_params[param_id]->mutable_cpu_diff(),
 					net_params[param_id]->count(), MPI_FLOAT, MPI_SUM,
-					MPI_COMM_WORLD ), MPI_SUCCESS);
+					MPI_COMM_WORLD );
 
+		caffe_gpu_scal(net_params[param_id]->count(), Dtype(1./Dtype(this->all_proc_)), net_params[param_id]->mutable_gpu_diff());
 //		mpi_end= MPI_Wtime();
 //	  LOG(INFO)<<"MPI Call: "<<mpi_end-mpi_start<<" seconds";
 
 #endif
+
+
       // Compute the value to history, and then copy them to the blob's diff.
       Dtype local_rate = rate * net_params_lr[param_id];
       Dtype local_decay = weight_decay * net_params_weight_decay[param_id];

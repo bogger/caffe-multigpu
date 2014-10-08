@@ -123,6 +123,7 @@ class DataLayer : public BasePrefetchingDataLayer<Dtype> {
   MDB_txn* mdb_txn_;
   MDB_cursor* mdb_cursor_;
   MDB_val mdb_key_, mdb_value_;
+
 };
 
 /**

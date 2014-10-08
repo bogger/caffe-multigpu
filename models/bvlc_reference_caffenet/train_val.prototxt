@@ -5,9 +5,9 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "/home/common/imagenet/ilsvrc12_train_lmdb"
+    source: "/media/ssd/caffe-official/examples/imagenet/imagenet_train_lmdb"
     backend: LMDB
-    batch_size: 128
+    batch_size: 86
   }
   transform_param {
     crop_size: 227
@@ -22,7 +22,7 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "/home/common/imagenet/ilsvrc12_val_lmdb"
+    source: "/media/ssd/caffe-official/examples/imagenet/imagenet_val_lmdb"
     backend: LMDB
     batch_size: 50
   }

@@ -111,11 +111,11 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 		break;
 		case DataParameter_DB_LMDB:
 		//Get the db size, split it into $(all_rank) parts by skiping corresponding items
-			MDB_stat stats;
-			mdb_env_stat(mdb_env_, &stats);
-			mpi_step_size = stats.ms_entries / all_rank;
-			skip += my_rank*mpi_step_size;
-			LOG(INFO)<<"mpi rank skipping "<< skip;
+//			MDB_stat stats;
+//			mdb_env_stat(mdb_env_, &stats);
+//			mpi_step_size = stats.ms_entries / all_rank;
+//			skip += my_rank*mpi_step_size;
+//			LOG(INFO)<<"mpi rank skipping "<< skip;
 
 		break;
 		default:
@@ -222,7 +222,14 @@ void DataLayer<Dtype>::InternalThreadEntry() {
   }
   const int batch_size = this->layer_param_.data_param().batch_size();
 
+#ifndef USE_MPI
   for (int item_id = 0; item_id < batch_size; ++item_id) {
+#else
+  for (int item_id = batch_size * Caffe::mpi_self_rank() * -1; item_id < batch_size * (Caffe::mpi_all_rank() - Caffe::mpi_self_rank()); ++item_id) {
+
+	  bool do_read = (item_id>=0) && (item_id<batch_size);
+	if(do_read){
+#endif
     // get a blob
     switch (this->layer_param_.data_param().backend()) {
     case DataParameter_DB_LEVELDB:
@@ -246,7 +253,9 @@ void DataLayer<Dtype>::InternalThreadEntry() {
     if (this->output_labels_) {
       top_label[item_id] = datum.label();
     }
-
+#ifdef USE_MPI
+	}
+#endif
     // go to the next iter
     switch (this->layer_param_.data_param().backend()) {
     case DataParameter_DB_LEVELDB:

@@ -16,6 +16,10 @@
 
 #include "caffe/test/test_caffe_main.hpp"
 
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
+
 namespace caffe {
 
 template <typename Dtype>
@@ -507,7 +511,15 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
     layers_[i]->Reshape(bottom_vecs_[i], &top_vecs_[i]);
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], &top_vecs_[i]);
     loss += layer_loss;
+#ifndef USE_MPI
     if (debug_info_) { ForwardDebugInfo(i); }
+#else
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+              if (myrank == 0){
+              	if (debug_info_) { ForwardDebugInfo(i); }
+              }
+#endif
   }
   return loss;
 }
@@ -571,7 +583,15 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
     if (layer_need_backward_[i]) {
       layers_[i]->Backward(
           top_vecs_[i], bottom_need_backward_[i], &bottom_vecs_[i]);
+#ifndef USE_MPI
       if (debug_info_) { BackwardDebugInfo(i); }
+#else
+      int myrank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+          if (myrank == 0){
+          	if (debug_info_) { BackwardDebugInfo(i); }
+          }
+#endif
     }
   }
 }
@@ -778,7 +798,15 @@ void Net<Dtype>::Update() {
   // Now, update the owned parameters.
   for (int i = 0; i < params_.size(); ++i) {
     if (param_owners_[i] >= 0) { continue; }
+#ifndef USE_MPI
     if (debug_info_) { UpdateDebugInfo(i); }
+#else
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    if (myrank == 0){
+    	if (debug_info_) { UpdateDebugInfo(i); }
+    }
+#endif
     params_[i]->Update();
   }
 }
