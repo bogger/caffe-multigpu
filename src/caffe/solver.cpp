@@ -534,8 +534,10 @@ void NesterovSolver<Dtype>::ComputeUpdateValue() {
   if (this->param_.display() && this->iter_ % this->param_.display() == 0) {
     LOG(INFO) << "Iteration " << this->iter_ << ", lr = " << rate;
   }
+  rate /= Dtype(this->param_.update_interval());
   Dtype momentum = this->param_.momentum();
   Dtype weight_decay = this->param_.weight_decay();
+  weight_decay *= Dtype(this->param_.update_interval());
   string regularization_type = this->param_.regularization_type();
   switch (Caffe::mode()) {
   case Caffe::CPU:
