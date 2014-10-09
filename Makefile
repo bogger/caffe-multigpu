@@ -273,8 +273,8 @@ endif
 ifeq ($(USE_MPI), 1)
 	LIBRARIES += mpi mpi_cxx
 	COMMON_FLAGS += -DUSE_MPI
-	MPI_INCLUDE = /usr/local/openmpi/include
-	MPI_LIB = /usr/local/openmpi/lib
+	MPI_INCLUDE = /usr/local/lib/include
+	MPI_LIB = /usr/local/lib/lib
 	INCLUDE_DIRS += $(MPI_INCLUDE)
 	LIBRARY_DIRS += $(MPI_LIB)
 endif
