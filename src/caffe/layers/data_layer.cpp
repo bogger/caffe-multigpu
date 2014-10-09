@@ -92,7 +92,7 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
   // Check if we would need to randomly skip a few data points
 #ifdef USE_MPI
-	int all_rank, my_rank, mpi_step_size;
+	int all_rank, my_rank;//, mpi_step_size;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &all_rank);
 	unsigned int skip;

@@ -17,6 +17,10 @@ CUDA_DIR := /usr/local/cuda
 # "sudo apt-get install nvidia-cuda-toolkit" then use this instead:
 # CUDA_DIR := /usr
 
+# Specify usage of MPI and location of mpi files
+# USE_MPI := 1
+# MPI_DIR := /usr/local/openmpi
+
 # CUDA architecture setting: going with all of them (up to CUDA 5.5 compatible).
 # For the latest architecture, you need to install CUDA >= 6.0 and uncomment
 # the *_50 lines below.
