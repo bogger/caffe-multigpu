@@ -225,7 +225,7 @@ void DataLayer<Dtype>::InternalThreadEntry() {
 #ifndef USE_MPI
   for (int item_id = 0; item_id < batch_size; ++item_id) {
 #else
-  for (int item_id = batch_size * Caffe::mpi_self_rank() * -1; item_id < batch_size * (Caffe::mpi_all_rank() - Caffe::mpi_self_rank()); ++item_id) {
+  for (int item_id = batch_size * Caffe::mpi_self_rank() * (-1); item_id < batch_size * (Caffe::mpi_all_rank() - Caffe::mpi_self_rank()); ++item_id) {
 
 	  bool do_read = (item_id>=0) && (item_id<batch_size);
 	if(do_read){
@@ -242,6 +242,7 @@ void DataLayer<Dtype>::InternalThreadEntry() {
               &mdb_value_, MDB_GET_CURRENT), MDB_SUCCESS);
       datum.ParseFromArray(mdb_value_.mv_data,
           mdb_value_.mv_size);
+//      LOG(INFO)<<"Read "<<item_id<<" "<<(char*)mdb_key_.mv_data;
       break;
     default:
       LOG(FATAL) << "Unknown database backend";
@@ -255,6 +256,9 @@ void DataLayer<Dtype>::InternalThreadEntry() {
     }
 #ifdef USE_MPI
 	}
+	else{
+//	    	LOG(INFO)<<" Skipped: "<<item_id<<" "<<(char*)mdb_key_.mv_data;
+	    }
 #endif
     // go to the next iter
     switch (this->layer_param_.data_param().backend()) {
@@ -278,6 +282,7 @@ void DataLayer<Dtype>::InternalThreadEntry() {
     default:
       LOG(FATAL) << "Unknown database backend";
     }
+
   }
 }
 
