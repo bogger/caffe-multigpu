@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
@@ -174,8 +175,8 @@ class ContrastiveLossLayer : public LossLayer<Dtype> {
 
   /**
    * @brief Computes the Contrastive error gradient w.r.t. the inputs.
-   * 
-   * Computes the gradients with respect to the two input vectors (bottom[0] and 
+   *
+   * Computes the gradients with respect to the two input vectors (bottom[0] and
    * bottom[1]), but not the similarity label (bottom[2]).
    *
    * @param top output Blob vector (length 1), providing the error gradient with
@@ -194,7 +195,7 @@ class ContrastiveLossLayer : public LossLayer<Dtype> {
    *      the features @f$a@f$; Backward fills their diff with
    *      gradients if propagate_down[0]
    *   -# @f$ (N \times C \times 1 \times 1) @f$
-   *      the features @f$b@f$; Backward fills their diff with gradients if 
+   *      the features @f$b@f$; Backward fills their diff with gradients if
    *      propagate_down[1]
    */
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
@@ -761,6 +762,31 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
   vector<Blob<Dtype>*> softmax_bottom_vec_;
   /// top vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<Blob<Dtype>*> softmax_top_vec_;
+};
+
+template <typename Dtype>
+class TransformSoftmaxWithLossLayer: public SoftmaxWithLossLayer<Dtype> {
+ public:
+  explicit TransformSoftmaxWithLossLayer(const LayerParameter& param)
+            : SoftmaxWithLossLayer<Dtype>(param){}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_TRANSFORM_SOFTMAX_LOSS;
+  }
+protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  // virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+  //     vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  // virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+  //     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  //map<int, int> label_table_;
+  vector<int> new_labels_;
+  int sample_cnt_;
 };
 
 }  // namespace caffe
