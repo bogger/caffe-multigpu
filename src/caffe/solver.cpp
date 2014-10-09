@@ -543,10 +543,14 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
   if (this->myrank_ == 0 && this->param_.display() && this->iter_ % this->param_.display() == 0) {
       LOG(INFO) << "Iteration " << this->iter_ << ", lr = " << rate;
     }
-  rate /= Dtype(this->param_.update_interval());
+//  rate /= Dtype(this->param_.update_interval());
 #endif
   Dtype momentum = this->param_.momentum();
-  Dtype weight_decay = this->param_.weight_decay()  * Dtype(this->param_.update_interval());
+  Dtype weight_decay = this->param_.weight_decay();//  * Dtype(this->param_.update_interval());
+#ifndef USE_MPI
+//  rate /= Dtype(Caffe::mpi_all_rank());
+//  weight_decay *= Dtype(Caffe:mpi_all_rank());
+#endif
   string regularization_type = this->param_.regularization_type();
   switch (Caffe::mode()) {
   case Caffe::CPU:
@@ -604,10 +608,12 @@ void SGDSolver<Dtype>::ComputeUpdateValue() {
 					net_params[param_id]->count(), MPI_FLOAT, MPI_SUM,
 					MPI_COMM_WORLD );
 
-		caffe_gpu_scal(net_params[param_id]->count(), Dtype(1./Dtype(this->all_proc_)), net_params[param_id]->mutable_gpu_diff());
+		caffe_gpu_scal(net_params[param_id]->count(), Dtype(1./Dtype(this->param_.update_interval())/Dtype(Caffe::mpi_all_rank())), net_params[param_id]->mutable_gpu_diff());
 //		mpi_end= MPI_Wtime();
 //	  LOG(INFO)<<"MPI Call: "<<mpi_end-mpi_start<<" seconds";
 
+#else
+		caffe_gpu_scal(net_params[param_id]->count(), Dtype(1./Dtype(this->param_.update_interval())), net_params[param_id]->mutable_gpu_diff());
 #endif
 
 
