@@ -10,7 +10,7 @@ display: 20
 max_iter: 450000
 momentum: 0.9
 weight_decay: 0.00025
-snapshot: 10000
+snapshot: 5000
 snapshot_prefix: "models/googlenet/googlenet_train"
 solver_mode: GPU
 test_initialization: false
