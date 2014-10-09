@@ -7,7 +7,7 @@ layers {
   data_param {
     source: "/home/common/imagenet/ilsvrc12_train_lmdb"
     backend: LMDB
-    batch_size: 128 
+    batch_size: 64
   }
   transform_param {
     crop_size: 224
@@ -99,10 +99,9 @@ layers {
     num_output: 64
     pad: 0
     kernel_size: 1
-    group: 2
+    group: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -129,7 +128,7 @@ layers {
     num_output: 192
     pad: 1
     kernel_size: 3
-    group: 2
+    group: 1
     weight_filler {
       type: "gaussian"
       std: 0.02
@@ -184,8 +183,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -213,8 +211,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -255,8 +252,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -342,8 +338,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -383,8 +378,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -412,8 +406,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -454,8 +447,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -541,8 +533,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -594,8 +585,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -623,8 +613,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -665,8 +654,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -752,8 +740,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -806,8 +793,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -902,8 +888,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -931,8 +916,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -973,8 +957,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1060,8 +1043,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1101,8 +1083,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1130,8 +1111,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1172,8 +1152,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1259,8 +1238,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1300,8 +1278,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1329,8 +1306,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1371,8 +1347,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1458,8 +1433,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1512,8 +1486,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1608,8 +1581,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1637,8 +1609,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1679,8 +1650,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1766,8 +1736,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1818,8 +1787,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1847,8 +1815,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1889,8 +1856,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -1976,8 +1942,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -2017,8 +1982,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -2046,8 +2010,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -2088,8 +2051,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
@@ -2175,8 +2137,7 @@ layers {
     pad: 0
     kernel_size: 1
     weight_filler {
-      type: "gaussian"
-      std: 0.1
+      type: "xavier"
     }
     bias_filler {
       type: "constant"
