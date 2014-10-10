@@ -131,6 +131,12 @@ class Caffe {
   inline static void set_accumulate(bool acum) { Get().accumulate_ = acum; }
   inline static bool accumulate() { return Get().accumulate_; }
 
+#ifdef USE_MPI
+  inline static void set_mpi_self_rank(int rank) {Get().mpi_self_rank_ = rank;}
+      inline static int mpi_self_rank() {return Get().mpi_self_rank_;}
+      inline static void set_mpi_all_rank(int all_rank) {Get().mpi_all_rank_ = all_rank;}
+      inline static int mpi_all_rank() {return Get().mpi_all_rank_;}
+#endif
 
 
  protected:
@@ -146,10 +152,7 @@ class Caffe {
   static shared_ptr<Caffe> singleton_;
 
 #ifdef USE_MPI
-  inline static void set_mpi_self_rank(int rank) {Get().mpi_self_rank_ = rank;}
-    inline static int mpi_self_rank() {return Get().mpi_self_rank_;}
-    inline static void set_mpi_all_rank(int all_rank) {Get().mpi_all_rank_ = all_rank;}
-    inline static int mpi_all_rank() {return Get().mpi_all_rank_;}
+
   int mpi_self_rank_;
   int mpi_all_rank_;
 #endif

@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
-#GOOGLE_LOG_DIR=models/googlenet \
-mpirun -np 4 ./build/tools/caffe train \
+GOOGLE_LOG_DIR=models/googlenet/log \
+mpirun -np 2 ./build/tools/caffe train \
     --solver=models/googlenet/solver.prototxt \
+    --snapshot=models/googlenet/googlenet_train_iter_20000.solverstate
 #    --gpu=3

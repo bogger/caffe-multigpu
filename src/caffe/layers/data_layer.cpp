@@ -14,6 +14,8 @@
 
 #ifdef USE_MPI
 #include "mpi.h"
+#include <boost/filesystem.hpp>
+using namespace boost::filesystem;
 #endif
 
 namespace caffe {
@@ -50,9 +52,9 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     string rank_str = static_cast<ostringstream*>(&(ostringstream()<<myrank))->str();
-    LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().source()+rank_str;
+    LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().source();
         leveldb::Status status = leveldb::DB::Open(
-            options, this->layer_param_.data_param().source()+rank_str, &db_temp);
+            options, this->layer_param_.data_param().source(), &db_temp);
         CHECK(status.ok()) << "Failed to open leveldb "
                            << this->layer_param_.data_param().source() << std::endl
                            << status.ToString();
