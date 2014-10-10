@@ -27,7 +27,7 @@ template <typename Dtype>
 Solver<Dtype>::Solver(const string& param_file)
     : net_() {
   SolverParameter param;
-  ReadProtoFromTextFile(param_file, &param);
+  ReadProtoFromTextFileOrDie(param_file, &param);
   Init(param);
 }
 
