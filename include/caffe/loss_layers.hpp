@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
@@ -82,6 +83,82 @@ class AccuracyLayer : public Layer<Dtype> {
   }
 
   int top_k_;
+};
+
+/**
+ * @brief Computes the classification accuracy for a decision tree
+ *        classification task.
+ */
+template <typename Dtype>
+class AccuracyTreeLayer : public Layer<Dtype> {
+ public:
+  /**
+   * @param param provides AccuracyTreeParameter accuracy_param,
+   *     with AccuracyTreeLayer options:
+   *   - top_k (\b optional, default 1).
+   *     Sets the maximum rank @f$ k @f$ at which a prediction is considered
+   *     correct.  For example, if @f$ k = 5 @f$, a prediction is counted
+   *     correct if the correct label is among the top 5 predicted labels.
+   */
+  explicit AccuracyTreeLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_ACCURACY_TREE;
+  }
+
+  // Bottom blobs include all predictions from all branches / sub-branches
+  virtual inline int ExactNumBottomBlobs() const { return -1; }
+  virtual inline int ExactNumTopBlobs() const { return 1; }
+
+ protected:
+  /**
+   * @param bottom input Blob vector (length 2)
+   *   -# @f$ (N \times C \times H \times W) @f$
+   *      the predictions @f$ x @f$, a Blob with values in
+   *      @f$ [-\infty, +\infty] @f$ indicating the predicted score for each of
+   *      the @f$ K = CHW @f$ classes. Each @f$ x_n @f$ is mapped to a predicted
+   *      label @f$ \hat{l}_n @f$ given by its maximal index:
+   *      @f$ \hat{l}_n = \arg\max\limits_k x_{nk} @f$
+   *   -# @f$ (N \times 1 \times 1 \times 1) @f$
+   *      the labels @f$ l @f$, an integer-valued Blob with values
+   *      @f$ l_n \in [0, 1, 2, ..., K - 1] @f$
+   *      indicating the correct class label among the @f$ K @f$ classes
+   * @param top output Blob vector (length 1)
+   *   -# @f$ (1 \times 1 \times 1 \times 1) @f$
+   *      the computed accuracy: @f$
+   *        \frac{1}{N} \sum\limits_{n=1}^N \delta\{ \hat{l}_n = l_n \}
+   *      @f$, where @f$
+   *      \delta\{\mathrm{condition}\} = \left\{
+   *         \begin{array}{lr}
+   *            1 & \mbox{if condition} \\
+   *            0 & \mbox{otherwise}
+   *         \end{array} \right.
+   *      @f$
+   */
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+
+  /// @brief Not implemented -- AccuracyLayer cannot be used as a loss.
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
+    for (int i = 0; i < propagate_down.size(); ++i) {
+      if (propagate_down[i]) { NOT_IMPLEMENTED; }
+    }
+  }
+
+  int top_k_;
+  vector<vector<int> > new_labels_;
+  vector<int> num_classes_;
+  vector<int> depth_end_position_;
+  int num_nodes_;
+  int tree_depth_;
+  
 };
 
 /**
@@ -174,8 +251,8 @@ class ContrastiveLossLayer : public LossLayer<Dtype> {
 
   /**
    * @brief Computes the Contrastive error gradient w.r.t. the inputs.
-   * 
-   * Computes the gradients with respect to the two input vectors (bottom[0] and 
+   *
+   * Computes the gradients with respect to the two input vectors (bottom[0] and
    * bottom[1]), but not the similarity label (bottom[2]).
    *
    * @param top output Blob vector (length 1), providing the error gradient with
@@ -194,7 +271,7 @@ class ContrastiveLossLayer : public LossLayer<Dtype> {
    *      the features @f$a@f$; Backward fills their diff with
    *      gradients if propagate_down[0]
    *   -# @f$ (N \times C \times 1 \times 1) @f$
-   *      the features @f$b@f$; Backward fills their diff with gradients if 
+   *      the features @f$b@f$; Backward fills their diff with gradients if
    *      propagate_down[1]
    */
   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
@@ -761,6 +838,31 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
   vector<Blob<Dtype>*> softmax_bottom_vec_;
   /// top vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<Blob<Dtype>*> softmax_top_vec_;
+};
+
+template <typename Dtype>
+class TransformSoftmaxWithLossLayer: public SoftmaxWithLossLayer<Dtype> {
+ public:
+  explicit TransformSoftmaxWithLossLayer(const LayerParameter& param)
+            : SoftmaxWithLossLayer<Dtype>(param){}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_TRANSFORM_SOFTMAX_LOSS;
+  }
+protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  // virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+  //     vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  // virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+  //     const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  //map<int, int> label_table_;
+  vector<int> new_labels_;
+  int sample_cnt_;
 };
 
 }  // namespace caffe
