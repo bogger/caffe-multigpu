@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "boost/scoped_ptr.hpp"
 #include "hdf5.h"
@@ -346,6 +347,33 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
   vector<vector<float> > bg_windows_;
 };
 
-}  // namespace caffe
 
+
+
+template <typename Dtype>
+class LabelTransformLayer : public Layer<Dtype> {
+ public:
+  explicit LabelTransformLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual ~LabelTransformLayer() {}
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_LABEL_TRANSFORM;
+  }
+  virtual void LayerSetup(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+                            vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+ private:
+  //map<int, int> label_table_;
+  vector<int> new_labels_;
+};
+
+}  // namespace caffe
 #endif  // CAFFE_DATA_LAYERS_HPP_
