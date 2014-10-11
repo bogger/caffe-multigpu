@@ -16,4 +16,4 @@ solver_mode: GPU
 test_initialization: false
 debug_info: true
 debug_display: 5000
-random_seed: 29999883131
+random_seed: 519134322723416835

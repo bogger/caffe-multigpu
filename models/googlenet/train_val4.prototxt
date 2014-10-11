@@ -870,7 +870,7 @@ layers {
   bottom: "cls1_fc2"
   bottom: "label"
   top: "loss1"
-  loss_weight: 0.3
+  loss_weight: 1
 }
 
 # Inception module 4 ***************
@@ -1563,7 +1563,7 @@ layers {
   bottom: "cls2_fc2"
   bottom: "label"
   top: "loss2"
-  loss_weight: 0.3
+  loss_weight: 1
 }
 
 # Inception module 7 ***************
@@ -2212,6 +2212,7 @@ layers {
   bottom: "cls3_fc"
   bottom: "label"
   top: "loss3"
+  loss_weight: 1
 }
 layers {
   name: "accuracy1"

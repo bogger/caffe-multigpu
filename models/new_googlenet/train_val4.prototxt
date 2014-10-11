@@ -870,7 +870,18 @@ layers {
   bottom: "cls1_fc2"
   bottom: "label"
   top: "loss1"
-  loss_weight: 0.3
+  loss_weight: 0.2
+  label_transform_param {
+    label_transform_file: "models/new_googlenet/labels/label1_209"
+  }
+}
+layers {
+  name: "accuracy1"
+  type: TRANSFORM_ACCURACY
+  bottom: "cls1_fc2"
+  bottom: "label"
+  top: "accuracy1"
+  include: { phase: TEST }
   label_transform_param {
     label_transform_file: "models/new_googlenet/labels/label1_209"
   }
@@ -1566,11 +1577,23 @@ layers {
   bottom: "cls2_fc2"
   bottom: "label"
   top: "loss2"
-  loss_weight: 0.3
+  loss_weight: 0.5
   label_transform_param {
     label_transform_file: "models/new_googlenet/labels/label2_502"
   }
 }
+layers {
+  name: "accuracy2"
+  type: TRANSFORM_ACCURACY
+  bottom: "cls2_fc2"
+  bottom: "label"
+  top: "accuracy2"
+  include: { phase: TEST }
+  label_transform_param {
+    label_transform_file: "models/new_googlenet/labels/label2_502"
+  }
+}
+
 
 # Inception module 7 ***************
 layers {
@@ -2218,21 +2241,22 @@ layers {
   bottom: "cls3_fc"
   bottom: "label"
   top: "loss3"
+  loss_weight: 1
 }
 layers {
-  name: "accuracy1"
+  name: "accuracy_top1"
   type: ACCURACY
   bottom: "cls3_fc"
   bottom: "label"
-  top: "accuracy1"
+  top: "accuracy_top1"
   include: { phase: TEST }
 }
 layers {
-  name: "accuracy5"
+  name: "accuracy_top5"
   type: ACCURACY
   bottom: "cls3_fc"
   bottom: "label"
-  top: "accuracy5"
+  top: "accuracy_top5"
   include: { phase: TEST }
   accuracy_param {
     top_k: 5
