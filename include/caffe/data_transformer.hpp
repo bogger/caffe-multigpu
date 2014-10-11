@@ -4,6 +4,13 @@
 #include "caffe/common.hpp"
 #include "caffe/proto/caffe.pb.h"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>
+#include <opencv2/imgproc/imgproc.hpp>
+
+using namespace cv;
+
 namespace caffe {
 
 /**
@@ -20,7 +27,13 @@ class DataTransformer {
   virtual ~DataTransformer() {}
 
   void InitRand();
-
+  void FillInOffsets(int *w, int *h, int width, int height, int crop_size) {
+    w[0] = 0; h[0] = 0;
+    w[1] = 0; h[1] = height - crop_size;
+    w[2] = width - crop_size; h[2] = 0;
+    w[3] = width - crop_size; h[3] = height - crop_size;
+    w[4] = (width - crop_size) / 2; h[4] = (height - crop_size) / 2;
+  }
   /**
    * @brief Applies the transformation defined in the data layer's
    * transform_param block to the data.
@@ -37,7 +50,8 @@ class DataTransformer {
    */
   void Transform(const int batch_item_id, const Datum& datum,
                  const Dtype* mean, Dtype* transformed_data);
-
+  void Transform(const int batch_item_id, const IplImage *img,
+                 const Dtype* mean, Dtype* transformed_data);
  protected:
   virtual unsigned int Rand();
 
