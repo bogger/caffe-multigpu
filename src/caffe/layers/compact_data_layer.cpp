@@ -19,6 +19,12 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
 
+#ifdef USE_MPI
+#include "mpi.h"
+#include <boost/filesystem.hpp>
+using namespace boost::filesystem;
+#endif
+
 using namespace cv;
 
 namespace caffe {
@@ -108,12 +114,22 @@ void CompactDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     leveldb::DB* db_temp;
     leveldb::Options options = GetLevelDBOptions();
     options.create_if_missing = false;
+#ifdef USE_MPI
+    LOG(ERROR) << "leveldb with MPI on same node is not yet tested! use at your own risk.";
     LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().source();
     leveldb::Status status = leveldb::DB::Open(
         options, this->layer_param_.data_param().source(), &db_temp);
     CHECK(status.ok()) << "Failed to open leveldb "
                        << this->layer_param_.data_param().source() << std::endl
                        << status.ToString();
+#else
+    LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().source();
+        leveldb::Status status = leveldb::DB::Open(
+            options, this->layer_param_.data_param().source(), &db_temp);
+        CHECK(status.ok()) << "Failed to open leveldb "
+                           << this->layer_param_.data_param().source() << std::endl
+                           << status.ToString();
+#endif
     db_.reset(db_temp);
     iter_.reset(db_->NewIterator(leveldb::ReadOptions()));
     iter_->SeekToFirst();
@@ -226,7 +242,15 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
   }
   const int batch_size = this->layer_param_.data_param().batch_size();
 
+#ifndef USE_MPI
   for (int item_id = 0; item_id < batch_size; ++item_id) {
+#else
+	  for (int item_id = batch_size * Caffe::mpi_self_rank() * (-1); item_id < batch_size * (Caffe::mpi_all_rank() - Caffe::mpi_self_rank()); ++item_id) {
+//		  For MPI usage, we collectively read batch_size * all_proc samples. Every process will use its
+//		  own part of samples. This method is more cache and hard disk efficient compared to dataset splitting.
+	  bool do_read = (item_id>=0) && (item_id<batch_size);
+	  if(do_read){
+#endif
     // get a blob
     switch (this->layer_param_.data_param().backend()) {
     case DataParameter_DB_LEVELDB:
@@ -267,7 +291,12 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
       }
       // LOG(INFO) << "label: " << top_label[item_id];
     }
-
+#ifdef USE_MPI
+	}
+	else{
+//	    	LOG(INFO)<<" Skipped: "<<item_id<<" "<<(char*)mdb_key_.mv_data;
+	    }
+#endif
     // go to the next iter
     switch (this->layer_param_.data_param().backend()) {
     case DataParameter_DB_LEVELDB:
