@@ -1,10 +1,101 @@
 #include <string>
+#include <opencv2/core/core_c.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
 
 #include "caffe/data_transformer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
 
+using namespace cv;
 namespace caffe {
+
+template<typename Dtype>
+void DataTransformer<Dtype>::Transform(const int batch_item_id,
+                                       IplImage *img,
+                                       const Dtype* mean,
+                                       Dtype* transformed_data) {
+  const int crop_size = param_.crop_size();
+  const bool mirror = param_.mirror();
+  const Dtype scale = param_.scale();
+
+  int channels = img->nChannels;
+  int width = img->width;
+  int height = img->height;
+  unsigned char* data = (unsigned char *)img->imageData;
+  int step = img->widthStep / sizeof(char);
+  // crop 4 courners + center
+  int w[5], h[5];
+  FillInOffsets(w, h, width, height, crop_size);
+  int h_off, w_off;
+  // We only do random crop when we do training.
+  if (phase_ == Caffe::TRAIN) {
+    int r = Rand() % 5;
+    h_off = h[r];
+    w_off = w[r];
+  } else {
+    h_off = h[4];
+    w_off = w[4];
+  }
+
+
+  // -------------------!! for debug !! -------------------
+  // IplImage *dest = cvCreateImage(cvSize(crop_size, crop_size),
+                                    // img->depth, img->nChannels);
+  // cvResize(img, dest);
+  // cvNamedWindow("Sample1");
+  // cvNamedWindow("Sample2");
+  // if (phase_ == Caffe::TRAIN)
+  //   cvShowImage("Sample", dest);
+  // else
+  //   cvShowImage("Sample", img);
+  // cvWaitKey(0);
+  // cvReleaseImage(&img);
+  // cvReleaseImage(&dest);
+  // if (phase_ == Caffe::TRAIN) {
+  //   cvSetImageROI(img, cvRect(w_off, h_off, crop_size, crop_size));
+  //   cvCopy(img, dest, NULL);
+  //   cvResetImageROI(img);
+  //   cvShowImage("Sample1", img);
+  //   cvShowImage("Sample2", dest);
+  //   cvWaitKey(0);
+  // }
+  // cvReleaseImage(&dest);
+  // -------------------------------------------------------
+  if (mirror && Rand() % 2) {
+    // Copy mirrored version
+    for (int c = 0; c < channels; c++) {
+      for (int h = 0; h < crop_size; h++) {
+        for (int w = 0; w < crop_size; w++) {
+          int top_index = ((batch_item_id * channels + c) * crop_size + h)
+                          * crop_size + (crop_size - 1 - w);
+          int data_index = (h + h_off) * step + (w + w_off) * channels + c;
+          int mean_index = (c * crop_size + h) * crop_size + w;
+          Dtype datum_element = static_cast<Dtype>(data[data_index]);
+          transformed_data[top_index] = (datum_element - mean[mean_index]) * scale;
+        }
+      }
+    }
+  } else {
+    // Normal copy
+    for (int c = 0; c < channels; c++) {
+      for (int h = 0; h < crop_size; h++) {
+        for (int w = 0; w < crop_size; w++) {
+          int top_index = ((batch_item_id * channels + c) * crop_size + h)
+                          * crop_size + w;
+          int data_index = (h + h_off) * step + (w + w_off) * channels + c;
+          int mean_index = (c * crop_size + h) * crop_size + w;
+          Dtype datum_element = static_cast<Dtype>(data[data_index]);
+          transformed_data[top_index] = (datum_element - mean[mean_index]) * scale;
+        }
+      }
+    }
+  }
+
+}
 
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const int batch_item_id,

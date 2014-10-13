@@ -82,3 +82,6 @@ docs/dev
 
 # CMake generated files
 *.gen.cmake
+
+# dependency
+gflags-master
