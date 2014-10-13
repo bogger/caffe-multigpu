@@ -222,7 +222,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 42 (last added: TRANSFORM_ACCURACY) 
+  // LayerType next available ID: 44 (last added: COMPACT_DATA) 
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -232,6 +232,7 @@ message LayerParameter {
     ACCURACY = 1;
     ARGMAX = 30;
     BNLL = 2;
+    COMPACT_DATA = 43;
     CONCAT = 3;
     CONTRASTIVE_LOSS = 37;
     CONVOLUTION = 4;
@@ -353,6 +354,7 @@ message TransformationParameter {
   // Specify if we would like to randomly crop an image.
   optional uint32 crop_size = 3 [default = 0];
   optional string mean_file = 4;
+  optional bool multiscale = 5 [default = false];
 }
 
 // Message that stores parameters used by AccuracyLayer
