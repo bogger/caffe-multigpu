@@ -4,10 +4,12 @@
 #include <string>
 #include <vector>
 
+#include <opencv2/core/core_c.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/highgui/highgui_c.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
 
 #include "caffe/common.hpp"
 #include "caffe/data_layers.hpp"
@@ -29,7 +31,6 @@ CompactDataLayer<Dtype>::~CompactDataLayer<Dtype>() {
   case DataParameter_DB_LEVELDB:
     break;  // do nothing
   case DataParameter_DB_LMDB:
-    LOG(FATAL) << "do not support LMDB at present";
     mdb_cursor_close(mdb_cursor_);
     mdb_close(mdb_env_, mdb_dbi_);
     mdb_txn_abort(mdb_txn_);
@@ -119,7 +120,7 @@ void CompactDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     }
     break;
   case DataParameter_DB_LMDB:
-    LOG(FATAL) << "do not support LMDB at present";
+    //LOG(FATAL) << "do not support LMDB at present";
     CHECK_EQ(mdb_env_create(&mdb_env_), MDB_SUCCESS) << "mdb_env_create failed";
     CHECK_EQ(mdb_env_set_mapsize(mdb_env_, 1099511627776), MDB_SUCCESS);  // 1TB
     CHECK_EQ(mdb_env_open(mdb_env_,
@@ -173,18 +174,20 @@ void CompactDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   case DataParameter_DB_LEVELDB:
       value = this->iter_->value().ToString();
       mat = cvMat(1, 1000 * 1000 * 3, CV_8UC1, const_cast<char *>(value.data()) + sizeof(int));
-      img = cvDecodeImage(&mat, 1);
-      // datum size
-      this->datum_channels_ = img->nChannels;
-      cvReleaseImage(&img);
+
       //datum.ParseFromString(iter_->value().ToString());
     break;
   case DataParameter_DB_LMDB:
-    datum.ParseFromArray(mdb_value_.mv_data, mdb_value_.mv_size);
+      mat = cvMat(1, 1000 * 1000 * 3, CV_8UC1, (char *)(mdb_value_.mv_data) + sizeof(int));
+    //datum.ParseFromArray(mdb_value_.mv_data, mdb_value_.mv_size);
     break;
   default:
     LOG(FATAL) << "Unknown database backend";
   }
+  img = cvDecodeImage(&mat, 1);
+  // datum size
+  this->datum_channels_ = img->nChannels;
+  cvReleaseImage(&img);
 
   // image
   int crop_size = this->layer_param_.transform_param().crop_size();
@@ -231,30 +234,38 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
       CHECK(iter_->Valid());
       value = iter_->value().ToString();
       mat = cvMat(1, 1000 * 1000, CV_8UC1, const_cast<char *>(value.data()) + sizeof(int));
-      img = cvDecodeImage(&mat, 1);
+
       // datum.ParseFromString(iter_->value().ToString());
       break;
     case DataParameter_DB_LMDB:
-      LOG(FATAL) << "LMDB is not supported at present";
+      //LOG(FATAL) << "LMDB is not supported at present";
       CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_,
               &mdb_value_, MDB_GET_CURRENT), MDB_SUCCESS);
-      datum.ParseFromArray(mdb_value_.mv_data,
-          mdb_value_.mv_size);
+      mat = cvMat(1, 1000 * 1000 * 3, CV_8UC1, (char *)(mdb_value_.mv_data) + sizeof(int));
+      // datum.ParseFromArray(mdb_value_.mv_data,
+      //     mdb_value_.mv_size);
       break;
     default:
       LOG(FATAL) << "Unknown database backend";
     }
 
+    img = cvDecodeImage(&mat, 1);
     // Apply data transformations (mirror, scale, crop...)
     this->data_transformer_.Transform(item_id, img, this->mean_, top_data);
-    //cvNamedWindow("Sample");
-    //cvShowImage("Sample", img);
-    //cvWaitKey(0);
-    cvReleaseImage(&img);
+    cvReleaseImage(&img);  // release current image
     if (this->output_labels_) {
       //top_label[item_id] = datum.label();
-      top_label[item_id] = *((int *)const_cast<char *>(value.data()));
-      //LOG(INFO) << "label: " << top_label[item_id];
+      switch(this->layer_param_.data_param().backend()) {
+        case DataParameter_DB_LEVELDB:
+          top_label[item_id] = *((int *)const_cast<char *>(value.data()));
+          break;
+        case DataParameter_DB_LMDB:
+          top_label[item_id] = *((int *)mdb_value_.mv_data);
+          break;
+        default:
+          LOG(FATAL) << "Unkown database backend";
+      }
+      LOG(INFO) << "label: " << top_label[item_id];
     }
 
     // go to the next iter

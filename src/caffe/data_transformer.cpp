@@ -1,14 +1,21 @@
 #include <string>
+#include <opencv2/core/core_c.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
 
 #include "caffe/data_transformer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
 
+using namespace cv;
 namespace caffe {
 
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const int batch_item_id,
-                                       const IplImage *img,
+                                       IplImage *img,
                                        const Dtype* mean,
                                        Dtype* transformed_data) {
   const int crop_size = param_.crop_size();
@@ -34,6 +41,30 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
     w_off = w[4];
   }
 
+
+  // -------------------!! for debug !! -------------------
+  // IplImage *dest = cvCreateImage(cvSize(crop_size, crop_size),
+                                    // img->depth, img->nChannels);
+  // cvResize(img, dest);
+  // cvNamedWindow("Sample1");
+  // cvNamedWindow("Sample2");
+  // if (phase_ == Caffe::TRAIN)
+  //   cvShowImage("Sample", dest);
+  // else
+  //   cvShowImage("Sample", img);
+  // cvWaitKey(0);
+  // cvReleaseImage(&img);
+  // cvReleaseImage(&dest);
+  // if (phase_ == Caffe::TRAIN) {
+  //   cvSetImageROI(img, cvRect(w_off, h_off, crop_size, crop_size));
+  //   cvCopy(img, dest, NULL);
+  //   cvResetImageROI(img);
+  //   cvShowImage("Sample1", img);
+  //   cvShowImage("Sample2", dest);
+  //   cvWaitKey(0);
+  // }
+  // cvReleaseImage(&dest);
+  // -------------------------------------------------------
   if (mirror && Rand() % 2) {
     // Copy mirrored version
     for (int c = 0; c < channels; c++) {
