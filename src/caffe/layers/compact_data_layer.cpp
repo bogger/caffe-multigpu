@@ -265,7 +265,7 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
         default:
           LOG(FATAL) << "Unkown database backend";
       }
-      LOG(INFO) << "label: " << top_label[item_id];
+      // LOG(INFO) << "label: " << top_label[item_id];
     }
 
     // go to the next iter
