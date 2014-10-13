@@ -28,12 +28,36 @@ class DataTransformer {
 
   void InitRand();
   void FillInOffsets(int *w, int *h, int width, int height, int crop_size) {
-    w[0] = 0; h[0] = 0;
-    w[1] = 0; h[1] = height - crop_size;
-    w[2] = width - crop_size; h[2] = 0;
-    w[3] = width - crop_size; h[3] = height - crop_size;
-    w[4] = (width - crop_size) / 2; h[4] = (height - crop_size) / 2;
+    FillInOffsets(w, h, width, height, crop_size, crop_size);
+    // w[0] = 0; h[0] = 0;
+    // w[1] = 0; h[1] = height - crop_size;
+    // w[2] = width - crop_size; h[2] = 0;
+    // w[3] = width - crop_size; h[3] = height - crop_size;
+    // w[4] = (width - crop_size) / 2; h[4] = (height - crop_size) / 2;
   }
+
+  void FillInOffsets(int *w, int *h, int width, int height, int crop_w, int crop_h) {
+    if (crop_w < width * 2 / 3 && crop_h < height * 2 / 3) {
+      // we want to be conservative when the crop is small
+      w[0] = 0; h[0] = (height - crop_h) / 2;
+      w[1] = width - crop_w; h[1] = (height - crop_h) / 2;
+      w[2] = (width - crop_w) / 2; h[2] = 0;
+      w[3] = (width - crop_w) / 2; h[3] = height - crop_h;
+      w[4] = (width - crop_w) / 2; h[4] = (height - crop_h) / 2;
+    }
+    else {
+      w[0] = 0; h[0] = 0;
+      w[1] = 0; h[1] = height - crop_h;
+      w[2] = width - crop_w; h[2] = 0;
+      w[3] = width - crop_w; h[3] = height - crop_h;
+      w[4] = (width - crop_w) / 2; h[4] = (height - crop_h) / 2;
+    }
+  }
+
+  enum Scaling {SINGLE_SCALE, MULTIPLE_SCALE};
+  // prefine 9 ('scale' & 'aspect radio') combinations
+  static const int widths_[];
+  static const int heights_[];
   /**
    * @brief Applies the transformation defined in the data layer's
    * transform_param block to the data.
@@ -54,7 +78,10 @@ class DataTransformer {
                  const Dtype* mean, Dtype* transformed_data);
  protected:
   virtual unsigned int Rand();
-
+  void TransformSingle(const int batch_item_id, IplImage *img,
+               const Dtype* mean, Dtype* transformed_data);
+  void TransformMultiple(const int batch_item_id, IplImage *img,
+               const Dtype* mean, Dtype* transformed_data);
   // Tranformation parameters
   TransformationParameter param_;
 
@@ -62,6 +89,8 @@ class DataTransformer {
   shared_ptr<Caffe::RNG> rng_;
   Caffe::Phase phase_;
 };
+
+
 
 }  // namespace caffe
 

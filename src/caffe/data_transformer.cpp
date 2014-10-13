@@ -14,7 +14,13 @@ using namespace cv;
 namespace caffe {
 
 template<typename Dtype>
-void DataTransformer<Dtype>::Transform(const int batch_item_id,
+const int DataTransformer<Dtype>::widths_[] = {256, 256, 192, 224, 224, 168, 168, 168, 126};
+
+template<typename Dtype>
+const int DataTransformer<Dtype>::heights_[]  = {256, 192, 256, 224, 168, 224, 168, 126, 168};
+
+template<typename Dtype>
+void DataTransformer<Dtype>::TransformSingle(const int batch_item_id,
                                        IplImage *img,
                                        const Dtype* mean,
                                        Dtype* transformed_data) {
@@ -42,8 +48,8 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   }
 
 
-  // -------------------!! for debug !! -------------------
-  // IplImage *dest = cvCreateImage(cvSize(crop_size, crop_size),
+  ////// -------------------!! for debug !! -------------------
+  // IplImage *dest = cvCreateImage(cvSize(crop_size * 2, crop_size * 2),
                                     // img->depth, img->nChannels);
   // cvResize(img, dest);
   // cvNamedWindow("Sample1");
@@ -57,14 +63,15 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   // cvReleaseImage(&dest);
   // if (phase_ == Caffe::TRAIN) {
   //   cvSetImageROI(img, cvRect(w_off, h_off, crop_size, crop_size));
-  //   cvCopy(img, dest, NULL);
+  //   // cvCopy(img, dest, NULL);
+  //   cvResize(img, dest);
   //   cvResetImageROI(img);
   //   cvShowImage("Sample1", img);
   //   cvShowImage("Sample2", dest);
   //   cvWaitKey(0);
   // }
   // cvReleaseImage(&dest);
-  // -------------------------------------------------------
+  ////// -------------------------------------------------------
   if (mirror && Rand() % 2) {
     // Copy mirrored version
     for (int c = 0; c < channels; c++) {
@@ -95,6 +102,94 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
     }
   }
 
+}
+
+template<typename Dtype>
+void DataTransformer<Dtype>::TransformMultiple(const int batch_item_id,
+                                       IplImage *img,
+                                       const Dtype* mean,
+                                       Dtype* transformed_data) {
+  const int crop_size = param_.crop_size();
+  const bool mirror = param_.mirror();
+  const Dtype scale = param_.scale();
+
+  int channels = img->nChannels;
+  int width = img->width;
+  int height = img->height;
+
+
+  int sc = 3;  //(224, 224)
+  int cr = 4;  // center crop
+  // We only do random cropping & scaling when we do training.
+  if (phase_ == Caffe::TRAIN) {
+    sc = Rand() % 9;
+    cr = Rand() % 5;
+  }
+  int roi_w = widths_[sc];
+  int roi_h = heights_[sc];
+  // crop 4 courners + center
+  int w[5], h[5];
+  FillInOffsets(w, h, width, height, roi_w, roi_h);
+  int h_off = h[cr], w_off = w[cr];
+  IplImage *dest = cvCreateImage(cvSize(crop_size, crop_size),
+                                    img->depth, img->nChannels);
+
+  cvSetImageROI(img, cvRect(w_off, h_off, roi_w, roi_h));
+  cvResize(img, dest);
+  cvResetImageROI(img);
+
+  //////--------------------!! for debug only !!-------------------
+  // if (phase_ == Caffe::TRAIN) {
+  //   cvFlip(dest, NULL, 1);
+  //   cvShowImage("Sample1", img);
+  //   cvShowImage("Sample2", dest);
+  //   LOG(INFO) << w_off << ", " << h_off << "   " << roi_w << ", " << roi_h;
+  //   cvWaitKey(0);
+  // }
+
+  unsigned char* data = (unsigned char *)dest->imageData;
+  int step = dest->widthStep / sizeof(char);
+  if (mirror && Rand() % 2) {
+    // Copy mirrored version
+    for (int c = 0; c < channels; c++) {
+      for (int h = 0; h < crop_size; h++) {
+        for (int w = 0; w < crop_size; w++) {
+          int top_index = ((batch_item_id * channels + c) * crop_size + h)
+                          * crop_size + (crop_size - 1 - w);
+          int data_index = h * step + w * channels + c;
+          int mean_index = (c * crop_size + h) * crop_size + w;
+          Dtype datum_element = static_cast<Dtype>(data[data_index]);
+          transformed_data[top_index] = (datum_element - mean[mean_index]) * scale;
+        }
+      }
+    }
+  } else {
+    // Normal copy
+    for (int c = 0; c < channels; c++) {
+      for (int h = 0; h < crop_size; h++) {
+        for (int w = 0; w < crop_size; w++) {
+          int top_index = ((batch_item_id * channels + c) * crop_size + h)
+                          * crop_size + w;
+          int data_index = h * step + w * channels + c;
+          int mean_index = (c * crop_size + h) * crop_size + w;
+          Dtype datum_element = static_cast<Dtype>(data[data_index]);
+          transformed_data[top_index] = (datum_element - mean[mean_index]) * scale;
+        }
+      }
+    }
+  }
+  cvReleaseImage(&dest);
+}
+
+template<typename Dtype>
+void DataTransformer<Dtype>::Transform(const int batch_item_id,
+                                       IplImage *img,
+                                       const Dtype* mean,
+                                       Dtype* transformed_data) {
+  if (!param_.multiscale())
+    TransformSingle(batch_item_id, img, mean, transformed_data);
+  else
+    TransformMultiple(batch_item_id, img, mean, transformed_data);
 }
 
 template<typename Dtype>
