@@ -1,4 +1,4 @@
-name: "CaffeNet"
+name: "TwoLayerTree"
 layers {
   name: "data"
   type: DATA
@@ -7,7 +7,7 @@ layers {
   data_param {
     source: "/home/common/imagenet/ilsvrc12_train_lmdb"
     backend: LMDB
-    batch_size: 256
+    batch_size: 64
   }
   transform_param {
     crop_size: 227
