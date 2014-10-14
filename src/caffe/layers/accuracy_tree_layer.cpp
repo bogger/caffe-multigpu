@@ -13,29 +13,31 @@ namespace caffe {
 template <typename Dtype>
 void AccuracyTreeLayer<Dtype>::LayerSetUp(
   const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
-  AccuracyTreeParameter tree_param = this->layer_param_.accuracy_tree_param();
-  top_k_ = tree_param.top_k();
+  TreeParameter tree_param = this->layer_param_.tree_param();
+  AccuracyParameter accuracy_param = this->layer_param_.accuracy_param();
+  top_k_ = accuracy_param.top_k();
   tree_depth_ = tree_param.tree_depth();
-  depth_end_position_.resize(tree_depth_);
   depth_end_position_.push_back(0);
 
   CHECK(tree_param.label_transform_file_size() > 0) << this->layer_param_.name() << " No label transform file provided";
   // each node is a classifier
   num_nodes_ = tree_param.label_transform_file_size();
   int bottom_size = this->layer_param_.bottom_size();
+  int top_size = this->layer_param_.top_size();
   // the last bottom is for the label
-  CHECK_EQ(bottom_size, num_nodes_+1);
+  CHECK_EQ(bottom_size, num_nodes_+1) << "labels should match with bottom blobs input";
+  CHECK_EQ(top_size, tree_depth_) << "top num should match with tree depth";
   new_labels_.resize(num_nodes_);
   int to_read = 1;  // number to read in the current depth 
   int depth_level = 0;
-  for (int i = 0; i < num_nodes_; ++i) {
-    std::ifstream trans_file(tree_param.label_transform_file(i).c_str());
+  for (int t = 0; t < num_nodes_; ++t) {
+    std::ifstream trans_file(tree_param.label_transform_file(t).c_str());
     CHECK(trans_file.is_open());
     int label_to;
     set<int> to;
-    new_labels_[i].clear();
+    new_labels_[t].clear();
     while (trans_file >> label_to) {
-      new_labels_[i].push_back(label_to);
+      new_labels_[t].push_back(label_to);
       if (label_to >= 0) {
         to.insert(label_to);
       }
@@ -45,14 +47,14 @@ void AccuracyTreeLayer<Dtype>::LayerSetUp(
     
     LOG(INFO) << this->layer_param_.name() << ": Transform to "
         << to.size() << " unique labels";
-    CHECK_EQ(to.size(), bottom[i]->count()/bottom[i]->num()) << this->layer_param_.name()
+    CHECK_EQ(to.size(), bottom[t]->count()/bottom[t]->num()) << this->layer_param_.name()
         << ": mismatched label sets and softmax dim";
 
     to_read -= 1;
     if (to_read == 0) {
-      depth_end_position_.push_back(i+1);
+      depth_end_position_.push_back(t+1);
       to_read = 0;
-      depth_level += 1;
+      depth_level ++;
       for (int tr = depth_end_position_[depth_level-1]; tr < depth_end_position_[depth_level]; ++tr)
         to_read += num_classes_[tr];
     }
@@ -64,11 +66,11 @@ void AccuracyTreeLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
   // CHECK_EQ(bottom[0]->num(), bottom[1]->num())
   //    << "The data and label should have the same number.";
-  CHECK_LE(top_k_, bottom[num_nodes_+1]->count() / bottom[num_nodes_+1]->num())
+  CHECK_LE(top_k_, bottom[num_nodes_]->count() / bottom[num_nodes_]->num())
       << "top_k must be less than or equal to the number of classes.";
-  CHECK_EQ(bottom[num_nodes_+1]->channels(), 1);
-  CHECK_EQ(bottom[num_nodes_+1]->height(), 1);
-  CHECK_EQ(bottom[num_nodes_+1]->width(), 1);
+  CHECK_EQ(bottom[num_nodes_]->channels(), 1);
+  CHECK_EQ(bottom[num_nodes_]->height(), 1);
+  CHECK_EQ(bottom[num_nodes_]->width(), 1);
 
   for (int d = 0; d < tree_depth_; ++d) 
     (*top)[d]->Reshape(1, 1, 1, 1);
@@ -78,10 +80,8 @@ template <typename Dtype>
 void AccuracyTreeLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
   vector<Dtype> accuracy(tree_depth_, 0);
-  const Dtype* bottom_label = bottom[num_nodes_+1]->cpu_data();
+  const Dtype* bottom_label = bottom[num_nodes_]->cpu_data();
   int num = bottom[0]->num();
-  // vector<Dtype> maxval(top_k_+1);
-  // vector<int> max_id(top_k_+1);
   for (int i = 0; i < num; ++i) {
     int node_idx = 0; // classifier index
     int depth_level = 0; // depth level of the current classifier 
@@ -119,13 +119,12 @@ void AccuracyTreeLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       int skip_nodes = 0;
       for (int node = depth_end_position_[depth_level]; node < node_idx; node++)
           skip_nodes += num_classes_[node]; 
-      node_idx = depth_end_position_[depth_level+1] + this_label;
+      node_idx = depth_end_position_[depth_level+1] + skip_nodes + this_label;
 
       depth_level++;
     }
   }
 
-  // LOG(INFO) << "Accuracy: " << accuracy;
   for (int d = 0; d < tree_depth_; ++d) 
     (*top)[d]->mutable_cpu_data()[0] = accuracy[d] / num;
   // Accuracy layer should not be used as a loss function.
