@@ -183,7 +183,7 @@ class AccuracyTreeLayer : public Layer<Dtype> {
 
   // Bottom blobs include all predictions from all branches / sub-branches
   virtual inline int ExactNumBottomBlobs() const { return -1; }
-  virtual inline int ExactNumTopBlobs() const { return 1; }
+  virtual inline int ExactNumTopBlobs() const { return -1; }
 
  protected:
   /**
@@ -946,6 +946,12 @@ class SoftmaxWithLossTreeLayer: public LossLayer<Dtype> {
   virtual inline LayerParameter_LayerType type() const {
     return LayerParameter_LayerType_SOFTMAX_LOSS_TREE;
   }
+  virtual inline int ExactNumBottomBlobs() const { return -1; }
+  virtual inline int MinBottomBlobs() const { return 2; }
+  virtual inline int MaxBottomBlobs() const { return -1; }
+  virtual inline int ExactNumTopBlobs() const { return -1; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return -1; }
 protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
@@ -960,14 +966,14 @@ protected:
   /// The internal SoftmaxLayer used to map predictions to a distribution.
   vector<shared_ptr<SoftmaxLayer<Dtype> > > softmax_layer_;
   /// prob stores the output probability predictions from the SoftmaxLayer.
-  vector<Blob<Dtype> > prob_;
+  vector<shared_ptr<Blob<Dtype> > > prob_;
   /// bottom vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<vector<Blob<Dtype>*> >softmax_bottom_vec_;
   /// top vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<vector<Blob<Dtype>*> >softmax_top_vec_;
 
-  vector<Dtype> loss_;
-  vector<Dtype> layer_weight_;
+  vector<Dtype> node_loss_;
+  vector<Dtype> node_weight_;
   vector<vector<int> > new_labels_;
   vector<int> num_classes_;
   vector<int> depth_end_position_;

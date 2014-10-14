@@ -16,5 +16,5 @@ snapshot_prefix: "models/two_layer_tree/tree_train"
 solver_mode: GPU
 test_initialization: false
 debug_info: true
-debug_display: 1000
+debug_display: 20
 random_seed: 29999883131

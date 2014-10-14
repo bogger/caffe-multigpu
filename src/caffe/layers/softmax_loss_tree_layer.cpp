@@ -14,33 +14,45 @@ void SoftmaxWithLossTreeLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
       vector<Blob<Dtype>*>* top) {
   LossLayer<Dtype>::LayerSetUp(bottom, top);
 
+  // make a buffer
+  vector<Dtype> lw_buffer;
+  for (int t = 0; t < top->size(); ++t)
+    lw_buffer.push_back(this->layer_param_.loss_weight(t));
+  this->layer_param_.clear_loss_weight();
+  //
+
   TreeParameter tree_param = this->layer_param_.tree_param();
   tree_depth_ = tree_param.tree_depth();
   depth_end_position_.push_back(0);
 
   CHECK(tree_param.label_transform_file_size() > 0) << this->layer_param_.name() << " No label transform file provided";
-  CHECK(tree_param.layer_weight_size() < tree_depth_) << this->layer_param_.name() << " layer_weight should not be bigger than tree depth";
-  for (int d = 0; d < tree_param.layer_weight_size(); ++d) {
-    layer_weight_.push_back(tree_param.layer_weight(d));
-  }
-  while (layer_weight_.size() < tree_depth_)
-    layer_weight_.push_back(Dtype(1.0));
   // each node is a classifier
   num_nodes_ = tree_param.label_transform_file_size();
+  CHECK(tree_param.node_weight_size() <= num_nodes_) << this->layer_param_.name() << " node_weight should not be bigger than node size";
+  for (int t = 0; t < tree_param.node_weight_size(); ++t) {
+    node_weight_.push_back(tree_param.node_weight(t));
+  }
+  while (node_weight_.size() < num_nodes_)
+    node_weight_.push_back(Dtype(1.0));
+
   int bottom_size = this->layer_param_.bottom_size();
   int top_size = this->layer_param_.top_size();
   softmax_bottom_vec_.resize(num_nodes_);
   softmax_top_vec_.resize(num_nodes_);
+  softmax_layer_.resize(num_nodes_);
+  prob_.resize(num_nodes_);
   // TODO: add layer_weight here
   CHECK_EQ(bottom_size, num_nodes_+1) << "labels should match with bottom blobs input";
   CHECK_EQ(top_size, tree_depth_) << "top num should match with tree depth";
   new_labels_.resize(num_nodes_);
-  loss_.resize(num_nodes_);
+  node_loss_.resize(num_nodes_);
   int to_read = 1; // number to read in the current depth
   int depth_level = 0; // current depth level
   for (int t = 0; t < num_nodes_; ++t) {
     softmax_bottom_vec_[t].clear();
     softmax_top_vec_[t].clear();
+    prob_[t].reset(new Blob<Dtype>());
+    softmax_layer_[t].reset(new SoftmaxLayer<Dtype>(this->layer_param_));
     // read the label file
     std::ifstream trans_file(tree_param.label_transform_file(t).c_str());
     CHECK(trans_file.is_open());
@@ -61,7 +73,7 @@ void SoftmaxWithLossTreeLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
     CHECK_EQ(to.size(), bottom[t]->count()/bottom[t]->num()) << this->layer_param_.name()
           << ": mismatched label sets and softmax dim";
     // construct a tree
-    to_read -= -1; 
+    to_read -= 1; 
     if (to_read == 0) {
       depth_end_position_.push_back(t+1);
       to_read = 0;
@@ -71,9 +83,11 @@ void SoftmaxWithLossTreeLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bot
     }
     // setup softmax layer
     softmax_bottom_vec_[t].push_back(bottom[t]);
-    softmax_top_vec_[t].push_back(&prob_[t]);
+    softmax_top_vec_[t].push_back(prob_[t].get());
     softmax_layer_[t]->SetUp(softmax_bottom_vec_[t], &softmax_top_vec_[t]);
   }
+  for (int t = 0; t < top->size(); ++t)
+    this->layer_param_.add_loss_weight(lw_buffer[t]);
 }
 
 template <typename Dtype>
@@ -88,6 +102,9 @@ void SoftmaxWithLossTreeLayer<Dtype>::Reshape(
      // (*top)[1]->ReshapeLike(*bottom[0]);
    // }
   }
+  for (int d = 0; d < tree_depth_; ++d) {
+    (*top)[d]->Reshape(1, 1, 1, 1);
+  }
 }
 
 template <typename Dtype>
@@ -96,13 +113,13 @@ void SoftmaxWithLossTreeLayer<Dtype>::Forward_cpu(
   // The forward pass computes the softmax prob values.
   for ( int t = 0; t < num_nodes_; ++t) {
     softmax_layer_[t]->Forward(softmax_bottom_vec_[t], &(softmax_top_vec_[t]));
-    const Dtype* prob_data = prob_[t].cpu_data();
+    const Dtype* prob_data = prob_[t]->cpu_data();
     const Dtype* label = bottom[num_nodes_]->cpu_data();
-    int num = this->prob_[t].num();
-    int dim = this->prob_[t].count() / num;
-    int spatial_dim = prob_[t].height() * prob_[t].width();
-    CHECK(prob_[t].height() == 1);
-    CHECK(prob_[t].width() == 1);
+    int num = this->prob_[t]->num();
+    int dim = this->prob_[t]->count() / num;
+    int spatial_dim = prob_[t]->height() * prob_[t]->width();
+    CHECK(prob_[t]->height() == 1);
+    CHECK(prob_[t]->width() == 1);
     Dtype loss = 0;
     int sample_cnt_ = 0;
     for (int i = 0; i < num; ++i) {
@@ -118,7 +135,7 @@ void SoftmaxWithLossTreeLayer<Dtype>::Forward_cpu(
       }
     }
     if (sample_cnt_ > 0)
-      loss_[t] = loss / num / spatial_dim;
+      node_loss_[t] = loss / num / spatial_dim;
     else
       ; //(*top)[0]->mutable_cpu_data()[0] = 0;
   }
@@ -126,8 +143,8 @@ void SoftmaxWithLossTreeLayer<Dtype>::Forward_cpu(
   // output the loss per tree layer
   for (int d = 0; d < tree_depth_; ++d) {
     (*top)[d]->mutable_cpu_data()[0] = 0;
-    for (int n = depth_end_position_[d]; n < depth_end_position_[d+1]; ++d) {
-      (*top)[d]->mutable_cpu_data()[0] += loss_[n];
+    for (int n = depth_end_position_[d]; n < depth_end_position_[d+1]; ++n) {
+      (*top)[d]->mutable_cpu_data()[0] += node_loss_[n];
     }
   }
 }
@@ -136,17 +153,16 @@ template <typename Dtype>
 void SoftmaxWithLossTreeLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
     vector<Blob<Dtype>*>* bottom) {
-  if (propagate_down[1]) {
+  if (propagate_down[num_nodes_]) {
     LOG(FATAL) << this->type_name()
                << " Layer cannot backpropagate to label inputs.";
   }
   if (propagate_down[0]) {
-    int num = prob_[0].num();
-    // initialize the bottom diff
+    int num = prob_[0]->num();
+    // initialize the bottom diff to zeros
     for (int t = 0; t < num_nodes_; ++t) {
       Dtype* bottom_diff = (*bottom)[t]->mutable_cpu_diff();
-      const Dtype* prob_data = prob_[t].cpu_data();
-      caffe_copy(prob_[t].count(), prob_data, bottom_diff);
+      caffe_set((*bottom)[t]->count(), Dtype(0), bottom_diff);
     }
     const Dtype* label = (*bottom)[num_nodes_]->cpu_data();
     for (int i = 0; i < num; ++i) {
@@ -154,12 +170,13 @@ void SoftmaxWithLossTreeLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& t
       int depth_level = 0;
       while(depth_level < tree_depth_) {
         Dtype* bottom_diff = (*bottom)[node_idx]->mutable_cpu_diff();
-        const Dtype* prob_data = prob_[node_idx].cpu_data();
-        int num = prob_[node_idx].num();
-        int dim = prob_[node_idx].count() / num;
-        int spatial_dim = prob_[node_idx].height() * prob_[node_idx].width();
-        CHECK(prob_[node_idx].height() == 1);
-        CHECK(prob_[node_idx].width() == 1);
+        const Dtype* prob_data = prob_[node_idx]->cpu_data();
+        int num = prob_[node_idx]->num();
+        int dim = prob_[node_idx]->count() / num;
+        int spatial_dim = prob_[node_idx]->height() * prob_[node_idx]->width();
+        CHECK(prob_[node_idx]->height() == 1);
+        CHECK(prob_[node_idx]->width() == 1);
+        caffe_copy(dim, prob_data + i * dim, bottom_diff + i * dim);
   
         int this_label;
         for (int j = 0; j < spatial_dim; ++j) {
@@ -171,6 +188,7 @@ void SoftmaxWithLossTreeLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& t
           }
           else {
             // if we set the diff to zero, we assume the negatives have no gradient
+            LOG(INFO) << "should never reach here";
             caffe_set(dim, Dtype(0), bottom_diff + i * dim);
             // otherwise, we should leave the bottom_diff unchanged
           }
@@ -198,14 +216,15 @@ void SoftmaxWithLossTreeLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& t
         depth_level++;
       }
       // recurssively set the children classifier to be zero
-      ResetChildrenGradient(bottom, i, node_idx, depth_level);
+      // ResetChildrenGradient(bottom, i, node_idx, depth_level);
     }
     // Scale gradient
     for (int d = 0; d < tree_depth_; ++d) {
-      for (int n = depth_end_position_[d]; n < depth_end_position_[d+1]; ++d) {
+      const Dtype loss_weight = top[d]->cpu_diff()[0];
+      for (int n = depth_end_position_[d]; n < depth_end_position_[d+1]; ++n) {
         Dtype* bottom_diff = (*bottom)[n]->mutable_cpu_diff();
-        int spatial_dim = prob_[n].height() * prob_[n].width();
-        caffe_scal(this->prob_[n].count(), layer_weight_[d] / num / spatial_dim, bottom_diff);
+        int spatial_dim = prob_[n]->height() * prob_[n]->width();
+        caffe_scal(prob_[n]->count(), loss_weight * node_weight_[n] / num / spatial_dim, bottom_diff);
       }
     }
   }
@@ -222,7 +241,7 @@ void SoftmaxWithLossTreeLayer<Dtype>::ResetChildrenGradient(vector<Blob<Dtype>*>
     for (int c = 0; c < num_classes_[node_idx]; ++c) {
       int child_node = depth_end_position_[depth_level+1] + skip_nodes + c;
       Dtype* bottom_diff = (*bottom)[child_node]->mutable_cpu_diff();
-      int dim = prob_[child_node].count() / prob_[child_node].num();
+      int dim = prob_[child_node]->count() / prob_[child_node]->num();
       caffe_set(dim, Dtype(0), bottom_diff + i * dim);
       ResetChildrenGradient(bottom, i, child_node, depth_level+1);
     }

@@ -555,9 +555,9 @@ message LabelTransformParameter {
   required string label_transform_file = 1;
 }
 
-// Massage that stors paramters used by AccuracyTree
+// Massage that stors paramters used by TreeLayers
 message TreeParameter {
-  repeated float layer_weight = 1;
+  repeated float node_weight = 1;
   required uint32 tree_depth = 2;
   repeated string label_transform_file = 3;
 }
