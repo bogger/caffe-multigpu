@@ -1,0 +1,20 @@
+net: "models/two_layer_tree/train_val_small.prototxt"
+test_iter: 1000
+test_interval: 1000
+# update_interval: 2
+base_lr: 0.01
+lr_policy: "step"
+gamma: 0.9
+# stepsize: 100000
+stepsize: 5000
+display: 20
+max_iter: 450000
+momentum: 0.9
+weight_decay: 0.0005
+snapshot: 5000
+snapshot_prefix: "models/two_layer_tree/tree_train"
+solver_mode: GPU
+test_initialization: false
+debug_info: true
+debug_display: 20
+random_seed: 29999883131

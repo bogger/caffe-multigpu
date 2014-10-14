@@ -222,7 +222,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 42 (last added: TRANSFORM_ACCURACY) 
+  // LayerType next available ID: 44 (last added: COMPACT_DATA) 
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -232,6 +232,7 @@ message LayerParameter {
     ACCURACY = 1;
     ARGMAX = 30;
     BNLL = 2;
+    COMPACT_DATA = 43;
     CONCAT = 3;
     CONTRASTIVE_LOSS = 37;
     CONVOLUTION = 4;
@@ -265,8 +266,9 @@ message LayerParameter {
     SLICE = 33;
     TANH = 23;
     TRANSFORM_SOFTMAX_LOSS = 39;
-    ACCURACY_TREE = 40;
-    TRANSFORM_ACCURACY = 41;
+    SOFTMAX_LOSS_TREE = 42;
+    ACCURACY_TREE = 41;
+    TRANSFORM_ACCURACY = 40;
     WINDOW_DATA = 24;
     THRESHOLD = 31;
   }
@@ -313,7 +315,7 @@ message LayerParameter {
   optional InfogainLossParameter infogain_loss_param = 16;
   optional InnerProductParameter inner_product_param = 17;
   optional LabelTransformParameter label_transform_param = 41;
-  optional AccuracyTreeParameter accuracy_tree_param = 42;
+  optional TreeParameter tree_param = 42;
   optional LRNParameter lrn_param = 18;
   optional MemoryDataParameter memory_data_param = 22;
   optional MVNParameter mvn_param = 34;
@@ -353,6 +355,7 @@ message TransformationParameter {
   // Specify if we would like to randomly crop an image.
   optional uint32 crop_size = 3 [default = 0];
   optional string mean_file = 4;
+  optional bool multiscale = 5 [default = false];
 }
 
 // Message that stores parameters used by AccuracyLayer
@@ -553,9 +556,9 @@ message LabelTransformParameter {
   required string label_transform_file = 1;
 }
 
-// Massage that stors paramters used by AccuracyTree
-message AccuracyTreeParameter {
-  optional uint32 top_k = 1 [default = 1];
+// Massage that stors paramters used by TreeLayers
+message TreeParameter {
+  repeated float node_weight = 1;
   required uint32 tree_depth = 2;
   repeated string label_transform_file = 3;
 }
