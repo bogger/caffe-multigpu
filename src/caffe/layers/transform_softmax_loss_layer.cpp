@@ -28,10 +28,11 @@ void TransformSoftmaxWithLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>
           to.insert(label_to);
       }
   }
+  trans_file.close();
 
   LOG(INFO) << this->layer_param_.name() << ": Transform to "
           << to.size() << " unique labels";
-  CHECK_EQ(to.size(), bottom[0]->channels()) << this->layer_param_.name()
+  CHECK_EQ(to.size(), bottom[0]->count()/bottom[0]->num()) << this->layer_param_.name()
         << ": mismatched label sets and softmax dim";
 }
 
@@ -99,7 +100,9 @@ void TransformSoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>
               * spatial_dim + j] -= 1;
         }
         else {
+          // if we set the diff to zero, we assume the negatives have no gradient
           caffe_set(dim, Dtype(0), bottom_diff + i * dim);
+          // otherwise, we should leave the bottom_diff unchanged
         }
       }
     }

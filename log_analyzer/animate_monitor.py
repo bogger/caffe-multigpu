@@ -18,7 +18,7 @@ class animate_monitor():
 
     def start(self):
         for i in xrange(1,3):
-            self.axes.append(self.fig.add_subplot(2,1,i))
+            self.axes.append(self.fig.add_subplot(2,1,i, sharex=self.axes[0] if i>1 else None))
 
         return self.show_value()
 
@@ -34,12 +34,12 @@ class animate_monitor():
 
 if __name__ == "__main__":
     log_files = [
-        '../models/googlenet/log/oct10_0_20000.22550',
-        '../models/googlenet/log/oct10_20000_35000.28025',
-        '../models/googlenet/log/oct11_35000_70000.5614',
-        '../models/googlenet/log/oct11_70000_85000.26819',
-        '../models/googlenet/log/oct12_85000_105000.24475',
-        '../models/googlenet/log/caffe.mmlab-107.alex.log.INFO.20141013-101423.6543'
+        # '../models/googlenet/log/oct10_0_20000.22550',
+        # '../models/googlenet/log/oct10_20000_35000.28025',
+        # '../models/googlenet/log/oct11_35000_70000.5614',
+        # '../models/googlenet/log/oct11_70000_85000.26819',
+        # '../models/googlenet/log/oct12_85000_105000.24475',
+        '../models/googlenet/log/caffe.mmlab-107.alex.log.INFO.20141013-173803.22149'
     ]
 
     fig = pyplot.figure(num=1, figsize=(15,9))

@@ -3,7 +3,7 @@
 # N.B. set the path to the imagenet train + val data dirs
 
 #EXAMPLE=examples/imagenet
-DATA=/home/sqiu/dataset/ILSVRC2012
+DATA=/home/common/ILSVRC2012
 TOOLS=build/tools
 
 DEST=examples/imagenet

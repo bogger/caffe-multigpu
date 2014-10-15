@@ -1,7 +1,7 @@
-net: "models/googlenet/train_val4.prototxt"
-test_iter: 1000
+net: "models/new_googlenet/train_val4.prototxt"
+test_iter: 250
 test_interval: 1000
-update_interval: 2
+# update_interval: 2
 base_lr: 0.04
 lr_policy: "step"
 gamma: 0.1
@@ -11,9 +11,9 @@ max_iter: 450000
 momentum: 0.9
 weight_decay: 0.00025
 snapshot: 5000
-snapshot_prefix: "models/googlenet/googlenet_train"
+snapshot_prefix: "models/new_googlenet/googlenet_train"
 solver_mode: GPU
-test_initialization: true
-#debug_info: true
-debug_display: 1000
+test_initialization: false
+debug_info: true
+debug_display: 5000
 random_seed: 519134322723416835

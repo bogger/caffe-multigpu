@@ -7,7 +7,7 @@ layers {
   data_param {
     source: "/media/ssd/caffe-official/examples/imagenet/imagenet_train_lmdb"
     backend: LMDB
-    batch_size: 86
+    batch_size: 256
   }
   transform_param {
     crop_size: 227
