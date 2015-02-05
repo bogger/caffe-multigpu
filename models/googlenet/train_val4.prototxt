@@ -5,7 +5,7 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/imagenet/imagenet_train_lmdb"
+    source: "../imagenet/imagenet_train_lmdb"
     backend: LMDB
     batch_size: 64
   }
@@ -22,7 +22,7 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/imagenet/imagenet_val_lmdb"
+    source: "../imagenet/imagenet_val_lmdb"
     backend: LMDB
     batch_size: 10
   }

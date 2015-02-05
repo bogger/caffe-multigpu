@@ -13,7 +13,8 @@ weight_decay: 0.00025
 snapshot: 5000
 snapshot_prefix: "models/googlenet/googlenet_train"
 solver_mode: GPU
-test_initialization: true
+test_initialization: false
 #debug_info: true
 debug_display: 1000
+device_id: [1]
 random_seed: 519134322723416835
