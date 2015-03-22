@@ -1,0 +1,29 @@
+# googlenet, v4
+# Hongyang Li, 2015.2.6
+# implemented on lab-pc
+
+
+net: "./train_val_v4_ext_label.prototxt"
+test_iter: 1000
+test_interval: 4000
+test_initialization: false
+
+
+max_iter: 1000000
+base_lr: 0.01			# BLVC
+lr_policy: "poly"		# quick mode
+power: 0.5	
+
+
+momentum: 0.9			# as paper suggests
+weight_decay: 0.0002 	# BLVC
+display: 20
+
+# 5k is a wise choise
+snapshot: 1000
+snapshot_prefix: "results/googlenet_train_v4"
+solver_mode: GPU
+
+
+update_interval: 2
+device_id: [0,1]                   
