@@ -484,6 +484,8 @@ LayerParameter_LayerType UpgradeV0LayerType(const string& type) {
     return LayerParameter_LayerType_LRN;
   } else if (type == "multinomial_logistic_loss") {
     return LayerParameter_LayerType_MULTINOMIAL_LOGISTIC_LOSS;
+  } else if (type == "soft_logistic_loss") {
+    return LayerParameter_LayerType_SOFT_LOGISTIC_LOSS;
   } else if (type == "pool") {
     return LayerParameter_LayerType_POOLING;
   } else if (type == "relu") {

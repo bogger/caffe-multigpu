@@ -233,6 +233,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new MVNLayer<Dtype>(param);
   case LayerParameter_LayerType_MULTINOMIAL_LOGISTIC_LOSS:
     return new MultinomialLogisticLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_SOFT_LOGISTIC_LOSS:
+    return new SoftLogisticLossLayer<Dtype>(param);
   case LayerParameter_LayerType_POOLING:
     return GetPoolingLayer<Dtype>(name, param);
   case LayerParameter_LayerType_POWER:

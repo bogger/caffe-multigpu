@@ -374,7 +374,7 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
 
   shared_ptr<Caffe::RNG> prefetch_rng_;
   vector<std::pair<std::string, vector<int> > > image_database_;
-  enum WindowField { IMAGE_INDEX, LABEL, OVERLAP, X1, Y1, X2, Y2, NUM };
+  enum WindowField { IMAGE_INDEX, LABEL, OVERLAP, X1, Y1, X2, Y2, FLIP, NUM };
   vector<vector<float> > fg_windows_;
   vector<vector<float> > bg_windows_;
 };

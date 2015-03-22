@@ -493,6 +493,10 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
     rate = this->param_.base_lr() *
         pow(Dtype(1) + this->param_.gamma() * this->iter_,
             - this->param_.power());
+  } else if (lr_policy == "poly") { //added by Linjie
+    rate = this->param_.base_lr() * pow(Dtype(1.) - 
+      (Dtype(this->iter_) / Dtype(this->param_.max_iter())),
+    this->param_.power());
   } else {
     LOG(FATAL) << "Unknown learning rate policy: " << lr_policy;
   }

@@ -253,6 +253,7 @@ message LayerParameter {
     LRN = 15;
     MEMORY_DATA = 29;
     MULTINOMIAL_LOGISTIC_LOSS = 16;
+    SOFT_LOGISTIC_LOSS = 50;
     MVN = 34;
     POOLING = 17;
     POWER = 26;

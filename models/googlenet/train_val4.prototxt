@@ -5,13 +5,13 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "../imagenet/imagenet_train_lmdb"
+    source: "../../../caffe-master/examples/imagenet/ilsvrc12_train_lmdb"
     backend: LMDB
     batch_size: 64
   }
   transform_param {
     crop_size: 224
-    mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "../../../caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
     mirror: true
   }
   include: { phase: TRAIN }
@@ -22,13 +22,13 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "../imagenet/imagenet_val_lmdb"
+    source: "../../../caffe-master/examples/imagenet/ilsvrc12_val_lmdb"
     backend: LMDB
     batch_size: 10
   }
   transform_param {
     crop_size: 224
-    mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "../../../caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
     mirror: false
   }
   include: { phase: TEST }
