@@ -95,6 +95,10 @@ void CompactDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   if (this->output_labels_) {
     this->prefetch_label_.mutable_cpu_data();
   }
+
+  if (this->layer_param_.top_size()>=3) {
+    this->prefetch_aux_label_.mutable_cpu_data();
+  }
   DLOG(INFO) << "Initializing prefetch";
   this->CreatePrefetchThread();
   DLOG(INFO) << "Prefetch initialized.";
@@ -177,6 +181,40 @@ void CompactDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       }
     }
   }
+  //set up aux label 
+  if (this->layer_param_.data_param().has_mem_data_source()) {
+    string key_name;
+    //float label[AUX_LABEL_LEN];
+    //std::ifstream infile(this->layer_param_.data_param().mem_data_source().c_str());
+    leveldb::DB* db_aux;
+    leveldb::Options options_aux = GetLevelDBOptions();
+    options_aux.create_if_missing = false;
+
+    LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().mem_data_source();
+    leveldb::Status status_aux = leveldb::DB::Open(
+        options_aux, this->layer_param_.data_param().mem_data_source(), &db_aux);
+    CHECK(status_aux.ok()) << "Failed to open leveldb "
+                       << this->layer_param_.data_param().mem_data_source() << std::endl
+                       << status_aux.ToString();
+    
+    leveldb::Iterator* iter_aux;
+    iter_aux = db_aux->NewIterator(leveldb::ReadOptions());
+    iter_aux->SeekToFirst();
+
+    int cnt_=0;
+   
+    string value_aux;
+    while (iter_aux->Valid()) {
+      value_aux = iter_aux->value().ToString();
+      key_name = iter_aux->key().ToString();
+      float * label = (float *)const_cast<char *>(value_aux.data());
+      CHECK(sizeof(label) / sizeof(float) == AUX_LABEL_LEN) <<"aux label length is not "<<AUX_LABEL_LEN;
+      this->aux_label_[key_name] = vector<float>(label, label + sizeof(label) / sizeof(float));
+      cnt_++;
+
+    }
+    LOG(INFO) << "Read " <<cnt_<< " aux label records";
+  }
   // Read a data point, and use it to initialize the top blob.
   Datum datum;
   string value;
@@ -221,22 +259,38 @@ void CompactDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   this->datum_height_ = crop_size;
   this->datum_width_ = crop_size;
   this->datum_size_ = this->datum_channels_ * this->datum_height_ * this->datum_width_;
+
+  if((this->layer_param_.top_size()>=3) && (!this->layer_param_.data_param().has_mem_data_source())) {
+    LOG(ERROR) <<"To use aux label, please provide a aux label file.";
+  }
+  //Reshape the top blob 3 to record aux label info
+  if (this->layer_param_.top_size()>=3) {
+    (*top)[2]->Reshape(this->layer_param_.data_param().batch_size(), AUX_LABEL_LEN, 1, 1);
+  }
+  if (this->layer_param_.data_param().has_mem_data_source()) {
+    this->prefetch_aux_label_.Reshape(this->layer_param_.data_param().batch_size(), AUX_LABEL_LEN, 1, 1);
+  }
 }
 
 // This function is used to create a thread that prefetches the data.
 template <typename Dtype>
 void CompactDataLayer<Dtype>::InternalThreadEntry() {
   Datum datum;
-  string value;
+  string key, value;
   CvMat mat;
   IplImage *img = NULL;
   CHECK(this->prefetch_data_.count());
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
   Dtype* top_label = NULL;  // suppress warnings about uninitialized variables
+  vector<float> aux_label;
+  Dtype* top_aux_label = NULL;
   if (this->output_labels_) {
     top_label = this->prefetch_label_.mutable_cpu_data();
   }
   const int batch_size = this->layer_param_.data_param().batch_size();
+  if (this->layer_param_.data_param().has_mem_data_source()) {
+    top_aux_label = this->prefetch_aux_label_.mutable_cpu_data();
+  }
 
 #ifndef USE_MPI
   for (int item_id = 0; item_id < batch_size; ++item_id) {
@@ -253,8 +307,8 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
       CHECK(iter_);
       CHECK(iter_->Valid());
       value = iter_->value().ToString();
+      key = iter_->key().ToString();
       mat = cvMat(1, 1000 * 1000, CV_8UC1, const_cast<char *>(value.data()) + sizeof(int));
-
       // datum.ParseFromString(iter_->value().ToString());
       break;
     case DataParameter_DB_LMDB:
@@ -262,11 +316,16 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
       CHECK_EQ(mdb_cursor_get(mdb_cursor_, &mdb_key_,
               &mdb_value_, MDB_GET_CURRENT), MDB_SUCCESS);
       mat = cvMat(1, 1000 * 1000 * 3, CV_8UC1, (char *)(mdb_value_.mv_data) + sizeof(int));
+      key = (char*)mdb_key_.mv_data;
       // datum.ParseFromArray(mdb_value_.mv_data,
       //     mdb_value_.mv_size);
       break;
     default:
       LOG(FATAL) << "Unknown database backend";
+    }
+    //get the corresponding aux label
+    if (this->layer_param_.data_param().has_mem_data_source()) {
+      aux_label = this->aux_label_.at(key);
     }
 
     img = cvDecodeImage(&mat, 1);
@@ -287,6 +346,13 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
       }
       // LOG(INFO) << "label: " << top_label[item_id];
     }
+    //write the aux labels to the prefetch buffer
+    if (this->layer_param_.data_param().has_mem_data_source()) {
+      for (int i=0; i < AUX_LABEL_LEN; i++) {
+        top_aux_label[item_id * AUX_LABEL_LEN + i] = aux_label[i];
+      }
+    }
+
 #ifdef USE_MPI
 	}
 	else{

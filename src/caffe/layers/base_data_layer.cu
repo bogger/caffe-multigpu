@@ -10,11 +10,17 @@ void BasePrefetchingDataLayer<Dtype>::Forward_gpu(
   // First, join the thread
   JoinPrefetchThread();
   // Copy the data
+  int skip = 1;
   caffe_copy(prefetch_data_.count(), prefetch_data_.cpu_data(),
       (*top)[0]->mutable_gpu_data());
   if (this->output_labels_) {
     caffe_copy(prefetch_label_.count(), prefetch_label_.cpu_data(),
         (*top)[1]->mutable_gpu_data());
+        skip = 2;
+  }
+  if (top->size() - skip > 0) {
+    caffe_copy(prefetch_aux_label_.count(), prefetch_aux_label_.cpu_data(),
+      (*top)[skip]->mutable_gpu_data());
   }
   // Start a new prefetch thread
   CreatePrefetchThread();
