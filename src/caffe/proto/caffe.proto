@@ -241,6 +241,7 @@ message LayerParameter {
     DUMMY_DATA = 32;
     EUCLIDEAN_LOSS = 7;
     ELTWISE = 25;
+    EXT_LABEL_ACCURACY = 51;
     FLATTEN = 8;
     HDF5_DATA = 9;
     HDF5_OUTPUT = 10;
@@ -253,7 +254,6 @@ message LayerParameter {
     LRN = 15;
     MEMORY_DATA = 29;
     MULTINOMIAL_LOGISTIC_LOSS = 16;
-    SOFT_LOGISTIC_LOSS = 50;
     MVN = 34;
     POOLING = 17;
     POWER = 26;
@@ -263,6 +263,7 @@ message LayerParameter {
     SILENCE = 36;
     SOFTMAX = 20;
     SOFTMAX_LOSS = 21;
+    SOFT_LOGISTIC_LOSS = 50;
     SPLIT = 22;
     SLICE = 33;
     TANH = 23;

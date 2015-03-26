@@ -12,12 +12,14 @@ layers {
   top: "label"
   window_data_param {
     source: "/home/ljyang/work/cluster/crop_windows.txt"
-    batch_size: 64
+    batch_size: 50
     fg_threshold: 0.5
     bg_threshold: 0.5
     fg_fraction: 1.0
     context_pad: 0
     crop_mode: "warp"
+    #added for MPI support
+    shuffle: true
   }
   transform_param {
     mirror: false
@@ -35,7 +37,7 @@ layers {
   top: "label"
   window_data_param {
     source: "/home/ljyang/work/cluster/crop_windows_val.txt"
-    batch_size: 10
+    batch_size: 50
     fg_threshold: 0.5
     bg_threshold: 0.5
     fg_fraction: 1.0
@@ -2447,7 +2449,7 @@ layers {
   bottom: "label"
   top: "loss3_top-1"
   name: "loss3_top-1"
-  type: ACCURACY
+  type: EXT_LABEL_ACCURACY
   include {
     phase: TEST
   }
@@ -2457,7 +2459,7 @@ layers {
   bottom: "label"
   top: "loss3_top-5"
   name: "loss3_top-5"
-  type: ACCURACY
+  type: EXT_LABEL_ACCURACY
   accuracy_param {
     top_k: 5
   }

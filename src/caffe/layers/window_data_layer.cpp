@@ -322,6 +322,8 @@ void WindowDataLayer<Dtype>::InternalThreadEntry() {
 
     //item_id++;
 #ifdef USE_MPI
+    //debugging info
+    LOG(INFO) << "window id processed: "<< windows_id_;
   }
 #endif
 
