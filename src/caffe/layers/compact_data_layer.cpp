@@ -325,7 +325,11 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
     }
     //get the corresponding aux label
     if (this->layer_param_.data_param().has_mem_data_source()) {
-      aux_label = this->aux_label_.at(key);
+      try{
+        aux_label = this->aux_label_.at(key.substr(0,8)); //data file key:$id_$filename, aux file key: $id 
+      } catch (const std::out_of_range & oor) {
+        LOG(ERROR)<<key<< " key not found in the aux label file.";
+      }
     }
 
     img = cvDecodeImage(&mat, 1);

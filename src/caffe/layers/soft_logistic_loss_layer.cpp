@@ -14,7 +14,7 @@ template <typename Dtype>
 void SoftLogisticLossLayer<Dtype>::Reshape(
     const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
   LossLayer<Dtype>::Reshape(bottom, top);
-  CHECK_EQ(bottom[1]->channels(), 1);
+  CHECK_EQ(bottom[1]->channels(), bottom[0]->channels());
   CHECK_EQ(bottom[1]->height(), 1);
   CHECK_EQ(bottom[1]->width(), 1);
 }

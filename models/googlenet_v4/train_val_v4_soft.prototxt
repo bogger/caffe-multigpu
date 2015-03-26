@@ -11,14 +11,15 @@ layers {
   name: "data"
   type: COMPACT_DATA
   data_param {
-    source: "/media/DATA2/ljyang/work/imagenet_data/ILSVRC2014_CLS/imagenet_train_compact_lmdb"
+    source: "/home/ljyang/work/imagenet_data/ILSVRC2014_CLS/imagenet_train_compact_lmdb"
+    mem_data_source: "/home/ljyang/work/imagenet_data/soft_target/google_v4_soft"
     batch_size: 64
     backend: LMDB
   }
   transform_param {
     mirror: true
     crop_size: 224
-    mean_file: "/media/DATA2/ljyang/work/caffe/caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "/home/ljyang/work/caffe/caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
     multiscale: true
   }
   include {
@@ -33,15 +34,16 @@ layers {
   name: "data"
   type: COMPACT_DATA
   data_param {
-    source: "/media/DATA2/ljyang/work/imagenet_data/ILSVRC2014_CLS/imagenet_val_compact_lmdb"
-    batch_size: 10
+    source: "/home/ljyang/work/imagenet_data/ILSVRC2014_CLS/imagenet_val_compact_lmdb"
+    mem_data_source: "/home/ljyang/work/imagenet_data/soft_target/google_v4_soft_val"
+    batch_size: 50
     backend: LMDB
   }
   transform_param {
     multiscale: true
     mirror: false
     crop_size: 224
-    mean_file: "/media/DATA2/ljyang/work/caffe/caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "/home/ljyang/work/caffe/caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
   }
   include {
     phase: TEST
