@@ -382,6 +382,7 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
   enum WindowField { IMAGE_INDEX, LABEL, OVERLAP, X1, Y1, X2, Y2, FLIP, NUM };
   vector<vector<float> > fg_windows_;
   vector<vector<float> > bg_windows_;
+  int windows_id_;
 };
 
 

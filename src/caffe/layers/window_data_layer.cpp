@@ -17,6 +17,13 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
 #include <exception>
+
+#ifdef USE_MPI
+#include "mpi.h"
+#include <boost/filesystem.hpp>
+using namespace boost::filesystem;
+#endif
+
 // caffe.proto > LayerParameter > WindowDataParameter
 //   'source' field specifies the window_file
 //   'crop_size' indicates the desired warped size
@@ -150,7 +157,15 @@ void WindowDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
   LOG(INFO) << "Crop mode: "
       << this->layer_param_.window_data_param().crop_mode();
-
+  //window shuffle
+  if (this->layer_param_.window_data_param().shuffle()) {
+    LOG(INFO) << "Shuffling data";
+    const unsigned int prefetch_rng_seed = caffe_rng_rand();
+    prefetch_rng_.reset(new Caffe::RNG(prefetch_rng_seed));
+    caffe::rng_t* prefetch_rng =
+      static_cast<caffe::rng_t*>(prefetch_rng_->generator());
+      shuffle(fg_windows_.begin(), fg_windows_.end(), prefetch_rng);
+  }
   // image
   const int crop_size = this->transform_param_.crop_size();
   CHECK_GT(crop_size, 0);
@@ -209,13 +224,23 @@ void WindowDataLayer<Dtype>::InternalThreadEntry() {
 
  
 
-  int item_id = 0;
+  //int item_id = 0;
   // sample from bg set then fg set
   int is_fg = 1;
-  for (int dummy = 0; dummy < batch_size; ++dummy) {
+#ifndef USE_MPI
+  for (int item_id = 0; item_id < batch_size; ++item_id) {
+#else
+  for (int item_id = batch_size * Caffe::mpi_self_rank() * (-1); item_id < batch_size * (Caffe::mpi_all_rank() - Caffe::mpi_self_rank()); ++item_id) {
+//      For MPI usage, we collectively read batch_size * all_proc samples. Every process will use its
+//      own part of samples. This method is more cache and hard disk efficient compared to dataset splitting.
+    bool do_read = (item_id>=0) && (item_id<batch_size);
+    if(do_read){
+#endif
+
     // sample a window
-    const unsigned int rand_index = PrefetchRand();
-    vector<float> window = fg_windows_[rand_index % fg_windows_.size()];
+    // const unsigned int rand_index = PrefetchRand();
+    CHECK_GT(fg_windows_.size(), windows_id_);
+    vector<float> window = fg_windows_[windows_id_];
     
 
     // load the image containing the window
@@ -293,42 +318,20 @@ void WindowDataLayer<Dtype>::InternalThreadEntry() {
     // get window label
     top_label[item_id] = window[WindowDataLayer<Dtype>::LABEL];
     //LOG(INFO) << "Reach end of function ";
-    #if 0
-    // useful debugging code for dumping transformed windows to disk
-    string file_id;
-    std::stringstream ss;
-    ss << PrefetchRand();
-    ss >> file_id;
-    std::ofstream inf((string("dump/") + file_id +
-        string("_info.txt")).c_str(), std::ofstream::out);
-    inf << image.first << std::endl
-        << window[WindowDataLayer<Dtype>::X1]+1 << std::endl
-        << window[WindowDataLayer<Dtype>::Y1]+1 << std::endl
-        << window[WindowDataLayer<Dtype>::X2]+1 << std::endl
-        << window[WindowDataLayer<Dtype>::Y2]+1 << std::endl
-        << window[WindowDataLayer<Dtype>::FLIP] << std::endl
-        << top_label[item_id] << std::endl
-        << is_fg << std::endl;
-    inf.close();
-    std::ofstream top_data_file((string("dump/") + file_id +
-        string("_data.txt")).c_str(),
-        std::ofstream::out | std::ofstream::binary);
-    for (int c = 0; c < channels; ++c) {
-      for (int h = 0; h < crop_size; ++h) {
-        for (int w = 0; w < crop_size; ++w) {
-          top_data_file.write(reinterpret_cast<char*>(
-              &top_data[((item_id * channels + c) * crop_size + h)
-                        * crop_size + w]),
-              sizeof(Dtype));
-        }
-      }
-    }
-    top_data_file.close();
-    #endif
+    
 
-    item_id++;
+    //item_id++;
+#ifdef USE_MPI
   }
-  
+#endif
+
+    windows_id_++;
+    if (windows_id_ >= fg_windows_.size()) {
+      // We have reached the end. Restart from the first.
+      DLOG(INFO) << "Restarting data prefetching from start.";
+      windows_id_ = 0;    
+    }
+  }
 }
 
 INSTANTIATE_CLASS(WindowDataLayer);

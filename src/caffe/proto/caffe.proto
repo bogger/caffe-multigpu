@@ -713,6 +713,7 @@ message WindowDataParameter {
   // warp: cropped window is warped to a fixed size and aspect ratio
   // square: the tightest square around the window is cropped
   optional string crop_mode = 11 [default = "warp"];
+  optional bool shuffle = 12 [default = false];
 }
 
 // DEPRECATED: V0LayerParameter is the old way of specifying layer parameters
