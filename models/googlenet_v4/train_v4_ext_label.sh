@@ -9,6 +9,7 @@ MPI_PATH=/usr/bin/
 #--weights=googlenet_train_v3.1_iter_595000.caffemodel \
 # MPI implementation
 GLOG_logtostderr=1 
-MPI_PATH/mpirun -np 4 ../../build/tools/caffe train \
+$MPI_PATH/mpirun -np 4 ../../build/tools/caffe train \
 	--solver=solver_v4_ext_label.prototxt \
+	--weights=googlenet_train_v4_iter_200000.caffemodel \
 2>&1 | tee googlenet_v4_ext_label.log 

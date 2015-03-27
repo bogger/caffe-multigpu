@@ -166,6 +166,8 @@ void WindowDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       static_cast<caffe::rng_t*>(prefetch_rng_->generator());
       shuffle(fg_windows_.begin(), fg_windows_.end(), prefetch_rng);
   }
+  //windows_id reset
+  windows_id_ = 0;
   // image
   const int crop_size = this->transform_param_.crop_size();
   CHECK_GT(crop_size, 0);
@@ -226,7 +228,7 @@ void WindowDataLayer<Dtype>::InternalThreadEntry() {
 
   //int item_id = 0;
   // sample from bg set then fg set
-  int is_fg = 1;
+  // int is_fg = 1;
 #ifndef USE_MPI
   for (int item_id = 0; item_id < batch_size; ++item_id) {
 #else
@@ -323,7 +325,13 @@ void WindowDataLayer<Dtype>::InternalThreadEntry() {
     //item_id++;
 #ifdef USE_MPI
     //debugging info
-    LOG(INFO) << "window id processed: "<< windows_id_;
+    //LOG(INFO) << "window id processed: "<< windows_id_;
+    // std::ofstream fout;
+    // char filename[100];
+    // sprintf(filename, "window_id_%d.txt", Caffe::mpi_self_rank());
+    // fout.open(filename, std::ofstream::out | std::ofstream::app);
+    // fout << windows_id_ << " ";
+    // fout.close(); 
   }
 #endif
 

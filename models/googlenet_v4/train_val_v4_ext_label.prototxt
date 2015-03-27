@@ -37,7 +37,7 @@ layers {
   top: "label"
   window_data_param {
     source: "/home/ljyang/work/cluster/crop_windows_val.txt"
-    batch_size: 50
+    batch_size: 20
     fg_threshold: 0.5
     bg_threshold: 0.5
     fg_fraction: 1.0
@@ -961,7 +961,7 @@ layers {
   bottom: "label"
   top: "loss1_top-1"
   name: "loss1_top-1"
-  type: ACCURACY
+  type: EXT_LABEL_ACCURACY
   include {
     phase: TEST
   }
@@ -971,7 +971,7 @@ layers {
   bottom: "label"
   top: "loss1_top-5"
   name: "loss1_top-5"
-  type: ACCURACY
+  type: EXT_LABEL_ACCURACY
   accuracy_param {
     top_k: 5
   }
@@ -1725,7 +1725,7 @@ layers {
   bottom: "label"
   top: "loss2_top-1"
   name: "loss2_top-1"
-  type: ACCURACY
+  type: EXT_LABEL_ACCURACY
   include {
     phase: TEST
   }
@@ -1735,7 +1735,7 @@ layers {
   bottom: "label"
   top: "loss2_top-5"
   name: "loss2_top-5"
-  type: ACCURACY
+  type: EXT_LABEL_ACCURACY
   accuracy_param {
     top_k: 5
   }

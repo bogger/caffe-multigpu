@@ -9,11 +9,10 @@ test_interval: 5000
 test_initialization: false
 
 
-max_iter: 500000
-base_lr: 0.01			# BLVC
+max_iter: 800000		#continue training of 20w
+base_lr: 0.009			# BLVC
 lr_policy: "poly"		# quick mode
 power: 0.5	
-
 
 momentum: 0.9			# as paper suggests
 weight_decay: 0.0002 	# BLVC
@@ -26,4 +25,6 @@ solver_mode: GPU
 
 
 update_interval: 1
-device_id: [0,1,2,3]                   
+device_id: [0,1,2,3]  
+
+random_seed: 342345623021                 
