@@ -183,38 +183,50 @@ void CompactDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   }
   //set up aux label 
   if (this->layer_param_.data_param().has_mem_data_source()) {
-    string key_name;
+    //string key_name;
     //float label[AUX_LABEL_LEN];
     //std::ifstream infile(this->layer_param_.data_param().mem_data_source().c_str());
-    leveldb::DB* db_aux;
-    leveldb::Options options_aux = GetLevelDBOptions();
-    options_aux.create_if_missing = false;
 
-    LOG(INFO) << "Opening leveldb " << this->layer_param_.data_param().mem_data_source();
-    leveldb::Status status_aux = leveldb::DB::Open(
-        options_aux, this->layer_param_.data_param().mem_data_source(), &db_aux);
-    CHECK(status_aux.ok()) << "Failed to open leveldb "
-                       << this->layer_param_.data_param().mem_data_source() << std::endl
-                       << status_aux.ToString();
-    
-    leveldb::Iterator* iter_aux;
-    iter_aux = db_aux->NewIterator(leveldb::ReadOptions());
-    iter_aux->SeekToFirst();
+    CHECK_EQ(mdb_env_create(&mdb_aux_env_), MDB_SUCCESS) << "mdb_env_create failed";
+    CHECK_EQ(mdb_env_set_mapsize(mdb_aux_env_, 1099511627776), MDB_SUCCESS);  // 1TB
+    CHECK_EQ(mdb_env_open(mdb_aux_env_,
+             this->layer_param_.data_param().mem_data_source().c_str(),
+             MDB_RDONLY|MDB_NOTLS, 0664), MDB_SUCCESS) << "mdb_env_open failed";
+    CHECK_EQ(mdb_txn_begin(mdb_aux_env_, NULL, MDB_RDONLY, &mdb_aux_txn_), MDB_SUCCESS)
+        << "mdb_txn_begin failed";
+    CHECK_EQ(mdb_open(mdb_aux_txn_, NULL, 0, &mdb_aux_dbi_), MDB_SUCCESS)
+        << "mdb_open failed";
+    CHECK_EQ(mdb_cursor_open(mdb_aux_txn_, mdb_aux_dbi_, &mdb_aux_cursor_), MDB_SUCCESS)
+        << "mdb_cursor_open failed";
+    LOG(INFO) << "Opening lmdb " << this->layer_param_.data_param().mem_data_source();
+    CHECK_EQ(mdb_cursor_get(mdb_aux_cursor_, &mdb_aux_key_, &mdb_aux_value_, MDB_FIRST),
+        MDB_SUCCESS) << "mdb_cursor_get failed";
 
-    int cnt_=0;
-   
-    string value_aux;
-    while (iter_aux->Valid()) {
-      value_aux = iter_aux->value().ToString();
-      key_name = iter_aux->key().ToString();
-      float * label = (float *)const_cast<char *>(value_aux.data());
-      CHECK(sizeof(label) / sizeof(float) == AUX_LABEL_LEN) <<"aux label length is not "<<AUX_LABEL_LEN;
-      this->aux_label_[key_name] = vector<float>(label, label + sizeof(label) / sizeof(float));
-      cnt_++;
+  
+      
 
-    }
-    LOG(INFO) << "Read " <<cnt_<< " aux label records";
+    // deprecated code for reading leveldb aux label
+    //leveldb cannot be read by multiple processes
+    // int cnt_=0;
+    // LOG(INFO) << "start to read aux data"; 
+    // Datum datum_aux;
+    // while (iter_aux->Valid()) {
+    //   datum_aux.ParseFromString(iter_aux->value().ToString());
+    //   key_name = iter_aux->key().ToString();
+    //   const float * label = datum_aux.mutable_float_data()->mutable_data();
+    //  // LOG(INFO) <<"first label: " << label[0];
+    //  // LOG(INFO) <<"last label: " << label[AUX_LABEL_LEN-1];
+    //  // LOG(INFO) << "size of label is "<< datum_aux.float_data().size();
+    //  // CHECK(sizeof(label) / sizeof(float) == AUX_LABEL_LEN) <<"aux label length is not "<<AUX_LABEL_LEN;
+    //   CHECK(datum_aux.float_data().size() == AUX_LABEL_LEN)<<"aux label length is not "<< AUX_LABEL_LEN;
+
+    //   this->aux_label_[key_name] = vector<float>(label, label + AUX_LABEL_LEN);
+    //   cnt_++;
+
+    // }
+    // LOG(INFO) << "Read " <<cnt_<< " aux label records";
   }
+  LOG(INFO) << "read a data point and use it to intialize";
   // Read a data point, and use it to initialize the top blob.
   Datum datum;
   string value;
@@ -282,7 +294,7 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
   CHECK(this->prefetch_data_.count());
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
   Dtype* top_label = NULL;  // suppress warnings about uninitialized variables
-  vector<float> aux_label;
+  float* aux_label = NULL;
   Dtype* top_aux_label = NULL;
   if (this->output_labels_) {
     top_label = this->prefetch_label_.mutable_cpu_data();
@@ -324,12 +336,23 @@ void CompactDataLayer<Dtype>::InternalThreadEntry() {
       LOG(FATAL) << "Unknown database backend";
     }
     //get the corresponding aux label
+    Datum datum_aux;
     if (this->layer_param_.data_param().has_mem_data_source()) {
-      try{
-        aux_label = this->aux_label_.at(key.substr(0,8)); //data file key:$id_$filename, aux file key: $id 
-      } catch (const std::out_of_range & oor) {
-        LOG(ERROR)<<key<< " key not found in the aux label file.";
-      }
+        //sprintf(mdb_aux_key_,'%s',key.substr(0,8));
+        mdb_aux_key_.mv_data = reinterpret_cast<void*>(&key[0]);
+        mdb_aux_key_.mv_size = 8;
+        //aux_label = this->aux_label_.at(key.substr(0,8)); //data file key:$id_$filename, aux file key: $id 
+        CHECK_EQ(mdb_cursor_get(mdb_aux_cursor_, &mdb_aux_key_,
+              &mdb_aux_value_, MDB_SET_KEY), MDB_SUCCESS);
+        datum_aux.ParseFromArray(mdb_aux_value_.mv_data,
+          mdb_aux_value_.mv_size);
+        aux_label = datum_aux.mutable_float_data()->mutable_data();
+        //array size
+        //LOG(INFO) << "size of label is "<< datum_aux.float_data().size();
+        
+        CHECK(datum_aux.float_data().size() == AUX_LABEL_LEN)<<"aux label length is not "<< AUX_LABEL_LEN;
+        //aux_label = (float *)(mdb_aux_value_.mv_data);
+      
     }
 
     img = cvDecodeImage(&mat, 1);

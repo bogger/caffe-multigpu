@@ -158,8 +158,13 @@ class CompactDataLayer : public BasePrefetchingDataLayer<Dtype> {
   MDB_txn* mdb_txn_;
   MDB_cursor* mdb_cursor_;
   MDB_val mdb_key_, mdb_value_;
-  
-  std::map<string, vector<float> > aux_label_;
+  //aux label:LMDB
+  MDB_env* mdb_aux_env_;
+  MDB_dbi mdb_aux_dbi_;
+  MDB_txn* mdb_aux_txn_;
+  MDB_cursor* mdb_aux_cursor_;
+  MDB_val mdb_aux_key_, mdb_aux_value_;
+  //std::map<string, vector<float> > aux_label_;
 
 
 };
