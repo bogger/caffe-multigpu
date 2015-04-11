@@ -186,6 +186,10 @@ void WindowDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       (*top)[0]->channels() * (*top)[0]->height() * (*top)[0]->width();
   // label
   (*top)[1]->Reshape(batch_size, 1, 1, 1);
+  if (this->layer_param_.top_size()>2) {
+      (*top)[2]->Reshape(batch_size, 1, 1, 1);
+      this->prefetch_aux_label_.Reshape(batch_size,1,1,1);
+  }
   this->prefetch_label_.Reshape(batch_size, 1, 1, 1);
 }
 
@@ -205,6 +209,7 @@ void WindowDataLayer<Dtype>::InternalThreadEntry() {
 
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
   Dtype* top_label = this->prefetch_label_.mutable_cpu_data();
+  Dtype* top_aux_label = NULL;
   const Dtype scale = this->layer_param_.window_data_param().scale();
   const int batch_size = this->layer_param_.window_data_param().batch_size();
   const int context_pad = this->layer_param_.window_data_param().context_pad();
@@ -319,6 +324,10 @@ void WindowDataLayer<Dtype>::InternalThreadEntry() {
     // }
     // get window label
     top_label[item_id] = window[WindowDataLayer<Dtype>::LABEL];
+    if (this->layer_param_.top_size() > 2) {
+      top_aux_label = this->prefetch_aux_label_.mutable_cpu_data();
+      top_aux_label[item_id] = int(top_label[item_id])/SUB_CLASS_NUM;
+    }
     //LOG(INFO) << "Reach end of function ";
     
 
