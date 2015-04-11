@@ -30,11 +30,11 @@ grep -B 1 'Test ' $1 > aux.txt
 
 # NOTE: change the following based on your test net output format
 grep 'Iteration ' aux.txt | sed  's/.*Iteration \([[:digit:]]*\).*/\1/g' > aux0.txt
-grep 'Test net output #7:' aux.txt | awk '{print $11}' > aux1.txt # top1 of loss3
+grep 'Test net output #8:' aux.txt | awk '{print $11}' > aux1.txt # top1 of loss3
 grep 'Test net output #0:' aux.txt | awk '{print $15}' > aux2.txt # loss1 (weighted)
 grep 'Test net output #3:' aux.txt | awk '{print $15}' > aux5.txt # loss2 (weighted)
 grep 'Test net output #6:' aux.txt | awk '{print $15}' > aux6.txt # loss3 (weighted)
-grep 'Test net output #8:' aux.txt | awk '{print $11}' > top5.txt # top5 of loss3
+grep 'Test net output #9:' aux.txt | awk '{print $11}' > top5.txt # top5 of loss3
 
 # Extracting elapsed seconds
 # For extraction of time since this line contains the start time

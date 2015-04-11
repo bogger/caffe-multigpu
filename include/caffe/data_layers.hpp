@@ -24,6 +24,7 @@ namespace caffe {
 #define HDF5_DATA_DATASET_NAME "data"
 #define HDF5_DATA_LABEL_NAME "label"
 #define AUX_LABEL_LEN 1000
+#define SUB_CLASS_NUM 20
 /**
  * @brief Provides base for data layers that feed blobs to the Net.
  *
@@ -109,6 +110,7 @@ class DataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual inline LayerParameter_LayerType type() const {
     return LayerParameter_LayerType_DATA;
   }
+
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int MinTopBlobs() const { return 1; }
   virtual inline int MaxTopBlobs() const { return 3; }
@@ -376,7 +378,8 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
     return LayerParameter_LayerType_WINDOW_DATA;
   }
   virtual inline int ExactNumBottomBlobs() const { return 0; }
-  virtual inline int ExactNumTopBlobs() const { return 2; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 3; }
 
  protected:
   virtual unsigned int PrefetchRand();
