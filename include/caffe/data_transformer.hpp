@@ -76,11 +76,17 @@ class DataTransformer {
                  const Dtype* mean, Dtype* transformed_data);
   void Transform(const int batch_item_id, IplImage *img,
                  const Dtype* mean, Dtype* transformed_data);
+  void TransformReturnCoord(const int batch_item_id,
+                            IplImage *img, const Dtype* mean,
+                            Dtype* transformed_data, float crop_coord[]);
+
   Caffe::Phase phase_;
  protected:
   virtual unsigned int Rand();
   void TransformSingle(const int batch_item_id, IplImage *img,
                const Dtype* mean, Dtype* transformed_data);
+  void TransformSingle(const int batch_item_id, IplImage *img,
+               const Dtype* mean, Dtype* transformed_data, float crop_coord[]);
   void TransformMultiple(const int batch_item_id, IplImage *img,
                const Dtype* mean, Dtype* transformed_data);
   // Tranformation parameters

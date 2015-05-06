@@ -5,6 +5,7 @@ import scipy.io as sio
 import time
 
 def main(argv):
+	#args: leveldb_name sample_n data_dim data_name
 	leveldb_name = sys.argv[1]
 	print "%s" % sys.argv[1]
 	print "%s" % sys.argv[2]

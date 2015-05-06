@@ -24,6 +24,7 @@ namespace caffe {
 #define HDF5_DATA_DATASET_NAME "data"
 #define HDF5_DATA_LABEL_NAME "label"
 #define AUX_LABEL_LEN 1000
+#define AUX_LABEL_BBOX_LEN 4
 #define SUB_CLASS_NUM 20
 /**
  * @brief Provides base for data layers that feed blobs to the Net.
@@ -167,6 +168,43 @@ class CompactDataLayer : public BasePrefetchingDataLayer<Dtype> {
   MDB_cursor* mdb_aux_cursor_;
   MDB_val mdb_aux_key_, mdb_aux_value_;
   //std::map<string, vector<float> > aux_label_;
+
+
+};
+
+template <typename Dtype>
+class CompactDataBboxLayer : public BasePrefetchingDataLayer<Dtype> {
+ public:
+  explicit CompactDataBboxLayer(const LayerParameter& param)
+      : BasePrefetchingDataLayer<Dtype>(param) {}
+  virtual ~CompactDataBboxLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_DATA;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 3; }
+
+ protected:
+  virtual void InternalThreadEntry();
+  void BboxCoordTransform(Dtype*top_label, float crop_coord[], vector<int> &bbox);
+  // LEVELDB
+  shared_ptr<leveldb::DB> db_;
+  shared_ptr<leveldb::Iterator> iter_;
+  // LMDB
+  MDB_env* mdb_env_;
+  MDB_dbi mdb_dbi_;
+  MDB_txn* mdb_txn_;
+  MDB_cursor* mdb_cursor_;
+  MDB_val mdb_key_, mdb_value_;
+
+  //aux label: bbox
+  std::map<string, vector<int> > bbox_data_;
 
 
 };

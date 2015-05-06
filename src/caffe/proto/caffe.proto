@@ -233,6 +233,7 @@ message LayerParameter {
     ARGMAX = 30;
     BNLL = 2;
     COMPACT_DATA = 43;
+    COMPACT_DATA_BBOX = 52;
     CONCAT = 3;
     CONTRASTIVE_LOSS = 37;
     CONVOLUTION = 4;
