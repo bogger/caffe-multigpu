@@ -267,7 +267,7 @@ void CompactDataBboxLayer<Dtype>::InternalThreadEntry() {
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
   Dtype* top_label = NULL;  // suppress warnings about uninitialized variables
   //float* aux_label = NULL;
-  float crop_coord[AUX_LABEL_BBOX_LEN];
+  float crop_coord[AUX_LABEL_BBOX_LEN+1];
   Dtype* top_aux_label = NULL;
   vector<int> bbox;
 
@@ -336,9 +336,10 @@ void CompactDataBboxLayer<Dtype>::InternalThreadEntry() {
     Datum datum_aux;
      //get the corresponding bounding box coordinates
     if (this->layer_param_.data_param().has_mem_data_source()){
-    // LOG(INFO)<<key.substr(9, key.length()-10);
+      int pos = key.find(".");
+      //LOG(INFO)<<key.substr(9, pos-4);
       try{
-        bbox = this->bbox_data_.at(key.substr(9, key.length()-10));
+        bbox = this->bbox_data_.at(key.substr(9, pos-4));
       }catch(const std::out_of_range& oor){
         DLOG(INFO)<<"image key not found in bbox list, maybe not annotated.";
         bbox = vector<int>(default_bbox_array, default_bbox_array + sizeof(default_bbox_array)/sizeof(int));
@@ -386,17 +387,18 @@ void CompactDataBboxLayer<Dtype>::InternalThreadEntry() {
 
 template <typename Dtype>
 void CompactDataBboxLayer<Dtype>::BboxCoordTransform(Dtype* top_label, float crop_coord[], vector <int> &bbox) {
-  float w_crop, h_crop;
+  float w_crop, h_crop, mirror;
   w_crop = crop_coord[2] - crop_coord[0] + 1;
   h_crop = crop_coord[3] - crop_coord[1] + 1;
-  top_label[0] = (bbox[0] - crop_coord[0]) / w_crop;
+  mirror = crop_coord[4];
+  top_label[0] = ((bbox[0] - crop_coord[0]) * (1.0 - mirror) + (crop_coord[2] - bbox[2]) * mirror) / w_crop;
   top_label[1] = (bbox[1] - crop_coord[1]) / h_crop;
-  top_label[2] = (crop_coord[2] - bbox[2]) / w_crop;
+  top_label[2] = ((bbox[0] - crop_coord[0]) * mirror + (crop_coord[2] - bbox[2]) * (1.0 - mirror)) / w_crop;
   top_label[3] = (crop_coord[3] - bbox[3]) / h_crop;
   //debug info
-  DLOG(INFO)<<"crop coord: "<<crop_coord[0]<<" "<<crop_coord[1]<<" "<<crop_coord[2]<<" "<<crop_coord[3];
-  DLOG(INFO)<<"bbox: "<<bbox[0]<<" "<<bbox[1]<<" "<<bbox[2]<<" "<<bbox[3];
-  DLOG(INFO)<<"label: "<<top_label[0]<< " "<<top_label[1]<<" "<<top_label[2]<<" "<<top_label[3];
+  // LOG(INFO)<<"crop coord: "<<crop_coord[0]<<" "<<crop_coord[1]<<" "<<crop_coord[2]<<" "<<crop_coord[3]<<" "<<crop_coord[4];
+  // LOG(INFO)<<"bbox: "<<bbox[0]<<" "<<bbox[1]<<" "<<bbox[2]<<" "<<bbox[3];
+  // LOG(INFO)<<"label: "<<top_label[0]<< " "<<top_label[1]<<" "<<top_label[2]<<" "<<top_label[3];
 }
 
 INSTANTIATE_CLASS(CompactDataBboxLayer);

@@ -160,6 +160,7 @@ void DataTransformer<Dtype>::TransformSingle(const int batch_item_id,
   ////// -------------------------------------------------------
   if (mirror && Rand() % 2) {
     // Copy mirrored version
+    crop_coord[4] = 1;
     for (int c = 0; c < channels; c++) {
       for (int h = 0; h < crop_size; h++) {
         for (int w = 0; w < crop_size; w++) {
@@ -174,6 +175,7 @@ void DataTransformer<Dtype>::TransformSingle(const int batch_item_id,
     }
   } else {
     // Normal copy
+    crop_coord[4] = 0;
     for (int c = 0; c < channels; c++) {
       for (int h = 0; h < crop_size; h++) {
         for (int w = 0; w < crop_size; w++) {
