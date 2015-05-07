@@ -27,7 +27,7 @@ def main(argv):
 	for i in range(split):
 		start = i*per_batch
 		final = min((i+1)*per_batch,window_num)
-		ft = np.zeros((final-start, sample_len),,dtype=np.float32)
+		ft = np.zeros((final-start, sample_len),dtype=np.float32)
 		for im_idx in range(start,final):
 			datum.ParseFromString(db.Get("%08d" %(im_idx)))
 			ft[im_idx-start, :] = datum.float_data
