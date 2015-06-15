@@ -17,11 +17,12 @@ iter_offset=[0,265000,0,0,200000,0,160000];
 iter_scale=[1,1,2,1,1,1,1];
 file_model_idx = [1,1,2,3,4,5,5];
 model_n = 5;
+n_per_line = 8;
 %organize data
 iters = cell(model_n,1);
 top5s = cell(model_n,1);
 for i=1:length(files)
-   [iter,top1,top5] = parse_log(files{i});
+   [iter,top1,top5] = parse_log(files{i},8);
    iter = (iter+iter_offset(i))*iter_scale(i);%continue training
    iters{file_model_idx(i)} = [iters{file_model_idx(i)};iter];
    top5s{file_model_idx(i)} = [top5s{file_model_idx(i)};top5];

@@ -974,6 +974,27 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
   vector<Blob<Dtype>*> softmax_top_vec_;
 };
 
+//Softmax loss layer with invalid labels denoted as -1
+template <typename Dtype>
+class SoftmaxLossWithInvalidLayer: public SoftmaxWithLossLayer<Dtype> {
+ public:
+  explicit SoftmaxLossWithInvalidLayer(const LayerParameter& param)
+            : SoftmaxWithLossLayer<Dtype>(param){}
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_SOFTMAX_LOSS_WITH_INVALID;
+  }
+protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+       vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+       const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+
+};
+
 template <typename Dtype>
 class TransformSoftmaxWithLossLayer: public SoftmaxWithLossLayer<Dtype> {
  public:

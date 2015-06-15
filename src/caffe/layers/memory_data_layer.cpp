@@ -46,7 +46,7 @@ void MemoryDataLayer<Dtype>::AddDatumVector(const vector<Datum>& datum_vector) {
     // Apply data transformations (mirror, scale, crop...)
     this->data_transformer_.Transform(
         batch_item_id, datum_vector[batch_item_id], this->mean_, top_data);
-    top_label[batch_item_id] = datum_vector[batch_item_id].label();
+    top_label[batch_item_id] = datum_vector[batch_item_id].label(0);
   }
   // num_images == batch_size_
   Reset(top_data, top_label, batch_size_);

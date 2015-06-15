@@ -200,10 +200,11 @@ void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       << (*top)[0]->channels() << "," << (*top)[0]->height() << ","
       << (*top)[0]->width();
   // label
+  const int label_size = this->layer_param_.label_size();
   if (this->output_labels_) {
-    (*top)[1]->Reshape(this->layer_param_.data_param().batch_size(), 1, 1, 1);
+    (*top)[1]->Reshape(this->layer_param_.data_param().batch_size(), label_size, 1, 1);
     this->prefetch_label_.Reshape(this->layer_param_.data_param().batch_size(),
-        1, 1, 1);
+        label_size, 1, 1);
   }
   // datum size
   this->datum_channels_ = datum.channels();
@@ -223,7 +224,7 @@ void DataLayer<Dtype>::InternalThreadEntry() {
     top_label = this->prefetch_label_.mutable_cpu_data();
   }
   const int batch_size = this->layer_param_.data_param().batch_size();
-
+  const int label_size = this->layer_param_.label_size();
 #ifndef USE_MPI
   for (int item_id = 0; item_id < batch_size; ++item_id) {
 #else
@@ -254,7 +255,9 @@ void DataLayer<Dtype>::InternalThreadEntry() {
     this->data_transformer_.Transform(item_id, datum, this->mean_, top_data);
 
     if (this->output_labels_) {
-      top_label[item_id] = datum.label();
+      for(int l=0; l<label_size; l++) {
+        top_label[item_id*label_size + l] = datum.label(l);
+      }
     }
 #ifdef USE_MPI
 	}

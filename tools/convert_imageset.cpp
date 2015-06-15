@@ -59,12 +59,35 @@ int main(int argc, char** argv) {
 
   bool is_color = !FLAGS_gray;
   std::ifstream infile(argv[2]);
-  std::vector<std::pair<string, int> > lines;
-  string filename;
-  int label;
-  while (infile >> filename >> label) {
-    lines.push_back(std::make_pair(filename, label));
+  std::vector<std::pair<string, vector<int> > > lines;
+  
+  
+  //adapted to multilabel scheme
+  std::string line;
+  int line_num = 1;
+  int num_labels = 0;
+  while (std::getline(infile, line)) {
+    std::istringstream iss(line);
+    string filename;
+    std::vector<int> labels;
+    int label;
+    CHECK(iss >> filename) << "Error reading line " << line_num;
+    while (iss >> label) {
+      labels.push_back(label);
+    }
+    if (line_num == 1) {
+      // Use first line to set the number of labels
+      num_labels = labels.size();
+    }
+    CHECK_EQ(labels.size(), num_labels) <<
+      filename << " error at line " << line_num << std::endl <<
+      " All images should have the same number of labels";
+    line_num++;
+    lines.push_back(std::make_pair(filename, labels));
   }
+  LOG(INFO) << "Read " << line_num - 1 << " images with " <<
+    num_labels << " labels";
+
   if (FLAGS_shuffle) {
     // randomly shuffle data
     LOG(INFO) << "Shuffling data";

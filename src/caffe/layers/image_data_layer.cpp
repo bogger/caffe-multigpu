@@ -30,10 +30,17 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   LOG(INFO) << "Opening file " << source;
   std::ifstream infile(source.c_str());
   string filename;
-  int label;
-  while (infile >> filename >> label) {
-    lines_.push_back(std::make_pair(filename, label));
+  vector<int> label; // more than one label
+  int label_size = this->layer_param_.label_size();
+  while (true) {
+    if (!(infile >> filename)) break;
+    for (int i=0; i<label_size; i++) {
+      infile >> label[i];
+    }
+    lines_.push_back(std::make_pair(filename, label));    
   }
+  
+  
 
   if (this->layer_param_.image_data_param().shuffle()) {
     // randomly shuffle data
@@ -74,8 +81,10 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       << (*top)[0]->channels() << "," << (*top)[0]->height() << ","
       << (*top)[0]->width();
   // label
-  (*top)[1]->Reshape(batch_size, 1, 1, 1);
-  this->prefetch_label_.Reshape(batch_size, 1, 1, 1);
+  
+  (*top)[1]->Reshape(batch_size, label_size, 1, 1);
+  
+  this->prefetch_label_.Reshape(batch_size, label_size, 1, 1);
   // datum size
   this->datum_channels_ = datum.channels();
   this->datum_height_ = datum.height();
@@ -101,7 +110,7 @@ void ImageDataLayer<Dtype>::InternalThreadEntry() {
   const int batch_size = image_data_param.batch_size();
   const int new_height = image_data_param.new_height();
   const int new_width = image_data_param.new_width();
-
+  const int label_size = this->layer_param_.label_size();
   // datum scales
   const int lines_size = lines_.size();
   for (int item_id = 0; item_id < batch_size; ++item_id) {
@@ -115,8 +124,12 @@ void ImageDataLayer<Dtype>::InternalThreadEntry() {
 
     // Apply transformations (mirror, crop...) to the data
     this->data_transformer_.Transform(item_id, datum, this->mean_, top_data);
-
-    top_label[item_id] = datum.label();
+    for (int l = 0; l < label_size; ++l) {
+      //modified for label buffer separation
+      top_label[item_id * label_size + l] = datum.label(l); 
+      // top_label[l * batch_size + item_id] = datum.label(l);
+    }
+    
     // go to the next iter
     lines_id_++;
     if (lines_id_ >= lines_size) {
