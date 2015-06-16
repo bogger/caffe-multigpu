@@ -82,16 +82,21 @@ bool ReadImageToDatum(const string& filename, const vector<int> &label,
   } else {
     cv_img = cv_img_origin;
   }
-
+  // LOG(INFO) <<"start setting label";
   int num_channels = (is_color ? 3 : 1);
   datum->set_channels(num_channels);
   datum->set_height(cv_img.rows);
   datum->set_width(cv_img.cols);
   // set vector label
-  datum->set_label(0, label[0]);
-  for (int i = 1 ; i < label.size(); ++i) {    
-      datum->add_label(label[i]);    
+  // LOG(INFO) <<"set the first: "<<label[0];
+  // datum->set_label(0, label[0]);
+
+  for (int i = 0; i < label.size(); ++i) {   
+      // LOG(INFO) <<"set the "<<i <<"th";  
+      datum->add_label(label[i]);   
+
   }
+  // LOG(INFO) <<"finish setting label";
   datum->clear_data();
   datum->clear_float_data();
   string* datum_string = datum->mutable_data();
@@ -112,6 +117,7 @@ bool ReadImageToDatum(const string& filename, const vector<int> &label,
         }
       }
   }
+  // LOG(INFO) <<"finish reading image";
   return true;
 }
 

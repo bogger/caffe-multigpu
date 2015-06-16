@@ -28,18 +28,25 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // Read the file with filenames and labels
   const string& source = this->layer_param_.image_data_param().source();
   LOG(INFO) << "Opening file " << source;
-  std::ifstream infile(source.c_str());
-  string filename;
-  vector<int> label; // more than one label
+  std::ifstream infile(source.c_str());  
+  
   int label_size = this->layer_param_.label_size();
+  //LOG(INFO) << "label size "<<label_size;
+
   while (true) {
-    if (!(infile >> filename)) break;
+    string filename;
+    vector<int> label; // more than one label
+    infile >> filename;
+    int l;
+    if (infile.eof()) {break;}    
     for (int i=0; i<label_size; i++) {
-      infile >> label[i];
+      infile >> l;
+      label.push_back(l);
+      //LOG(INFO) << l;
     }
     lines_.push_back(std::make_pair(filename, label));    
   }
-  
+  LOG(INFO) << "finish reading file ";
   
 
   if (this->layer_param_.image_data_param().shuffle()) {
@@ -47,7 +54,7 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     LOG(INFO) << "Shuffling data";
     const unsigned int prefetch_rng_seed = caffe_rng_rand();
     prefetch_rng_.reset(new Caffe::RNG(prefetch_rng_seed));
-    ShuffleImages();
+    ShuffleImages();//need a shared random seed in solver file for MPI version.
   }
   LOG(INFO) << "A total of " << lines_.size() << " images.";
 
@@ -113,7 +120,16 @@ void ImageDataLayer<Dtype>::InternalThreadEntry() {
   const int label_size = this->layer_param_.label_size();
   // datum scales
   const int lines_size = lines_.size();
+
+#ifndef USE_MPI
   for (int item_id = 0; item_id < batch_size; ++item_id) {
+#else
+  for (int item_id = batch_size * Caffe::mpi_self_rank() * (-1); item_id < batch_size * (Caffe::mpi_all_rank() - Caffe::mpi_self_rank()); ++item_id) {
+//      For MPI usage, we collectively read batch_size * all_proc samples. Every process will use its
+//      own part of samples. This method is more cache and hard disk efficient compared to dataset splitting.
+    bool do_read = (item_id>=0) && (item_id<batch_size);
+    if(do_read){
+#endif
     // get a blob
     CHECK_GT(lines_size, lines_id_);
     if (!ReadImageToDatum(lines_[lines_id_].first,
@@ -129,16 +145,26 @@ void ImageDataLayer<Dtype>::InternalThreadEntry() {
       top_label[item_id * label_size + l] = datum.label(l); 
       // top_label[l * batch_size + item_id] = datum.label(l);
     }
-    
+#ifdef USE_MPI
+    //debugging info
+    //LOG(INFO) << "window id processed: "<< windows_id_;
+    // std::ofstream fout;
+    // char filename[100];
+    // sprintf(filename, "window_id_%d.txt", Caffe::mpi_self_rank());
+    // fout.open(filename, std::ofstream::out | std::ofstream::app);
+    // fout << lines_id_ << " ";
+    // fout.close(); 
+  }
+#endif
     // go to the next iter
     lines_id_++;
     if (lines_id_ >= lines_size) {
       // We have reached the end. Restart from the first.
       DLOG(INFO) << "Restarting data prefetching from start.";
       lines_id_ = 0;
-      if (this->layer_param_.image_data_param().shuffle()) {
-        ShuffleImages();
-      }
+      // if (this->layer_param_.image_data_param().shuffle()) {
+      //   ShuffleImages();
+      // }    
     }
   }
 }
