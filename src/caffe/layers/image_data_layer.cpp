@@ -53,6 +53,7 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     // randomly shuffle data
     LOG(INFO) << "Shuffling data";
     const unsigned int prefetch_rng_seed = caffe_rng_rand();
+    LOG(INFO) << "RAND SEED "<<prefetch_rng_seed;
     prefetch_rng_.reset(new Caffe::RNG(prefetch_rng_seed));
     ShuffleImages();//need a shared random seed in solver file for MPI version.
   }
@@ -135,6 +136,7 @@ void ImageDataLayer<Dtype>::InternalThreadEntry() {
     if (!ReadImageToDatum(lines_[lines_id_].first,
           lines_[lines_id_].second,
           new_height, new_width, &datum)) {
+      LOG(INFO) << "image does not found: " << lines_[lines_id_].first;
       continue;
     }
 
@@ -145,6 +147,7 @@ void ImageDataLayer<Dtype>::InternalThreadEntry() {
       top_label[item_id * label_size + l] = datum.label(l); 
       // top_label[l * batch_size + item_id] = datum.label(l);
     }
+   // LOG(INFO) << "data point:"<<lines_[lines_id_].first<<" "<<datum.label(0);
 #ifdef USE_MPI
     //debugging info
     //LOG(INFO) << "window id processed: "<< windows_id_;

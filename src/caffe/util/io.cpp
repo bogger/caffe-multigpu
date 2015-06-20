@@ -90,7 +90,7 @@ bool ReadImageToDatum(const string& filename, const vector<int> &label,
   // set vector label
   // LOG(INFO) <<"set the first: "<<label[0];
   // datum->set_label(0, label[0]);
-
+  datum->clear_label();
   for (int i = 0; i < label.size(); ++i) {   
       // LOG(INFO) <<"set the "<<i <<"th";  
       datum->add_label(label[i]);   
