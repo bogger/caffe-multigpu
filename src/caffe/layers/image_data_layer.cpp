@@ -35,9 +35,9 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
   while (true) {
     string filename;
-    vector<int> label; // more than one label
+    vector<float> label; // more than one label
     infile >> filename;
-    int l;
+    float l;
     if (infile.eof()) {break;}    
     for (int i=0; i<label_size; i++) {
       infile >> l;

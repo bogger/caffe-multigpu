@@ -66,7 +66,7 @@ void WriteProtoToBinaryFile(const Message& proto, const char* filename) {
   CHECK(proto.SerializeToOstream(&output));
 }
 
-bool ReadImageToDatum(const string& filename, const vector<int> &label,
+bool ReadImageToDatum(const string& filename, const vector<float> &label,
     const int height, const int width, const bool is_color, Datum* datum) {
   cv::Mat cv_img;
   int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :

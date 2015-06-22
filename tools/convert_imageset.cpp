@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
   bool is_color = !FLAGS_gray;
   std::ifstream infile(argv[2]);
-  std::vector<std::pair<string, vector<int> > > lines;
+  std::vector<std::pair<string, vector<float> > > lines;
   
   
   //adapted to multilabel scheme
@@ -69,8 +69,8 @@ int main(int argc, char** argv) {
   while (std::getline(infile, line)) {
     std::istringstream iss(line);
     string filename;
-    std::vector<int> labels;
-    int label;
+    std::vector<float> labels;
+    float label;
     CHECK(iss >> filename) << "Error reading line " << line_num;
     while (iss >> label) {
       labels.push_back(label);
