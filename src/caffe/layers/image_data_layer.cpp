@@ -29,7 +29,9 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   const string& source = this->layer_param_.image_data_param().source();
   LOG(INFO) << "Opening file " << source;
   std::ifstream infile(source.c_str());  
-  
+  if (!infile.is_open()) {
+    LOG(FATAL) <<"Cannot open file "<<source;
+  }
   int label_size = this->layer_param_.label_size();
   //LOG(INFO) << "label size "<<label_size;
 
