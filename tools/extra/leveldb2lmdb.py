@@ -7,14 +7,14 @@ import time
 
 def main(argv):
 	leveldb_name = sys.argv[1]
-	db_save_name = sys.argv[4]
+	db_save_name = sys.argv[2]
 	print "%s" % sys.argv[1]
 	print "%s" % sys.argv[2]
-	print "%s" % sys.argv[3]
-	print "%s" % sys.argv[4]
+	# print "%s" % sys.argv[3]
+	# print "%s" % sys.argv[4]
         # window_num = 1000;
         # window_num = 12736;
-	window_num = int(sys.argv[2]);
+	# window_num = int(sys.argv[2]);
         # window_num = 2845;
 
 	start = time.time()
@@ -24,6 +24,13 @@ def main(argv):
 	db_save = lmdb.open(db_save_name, map_size=int(1e12))
 	#batch = leveldb.WriteBatch()
 	datum_save = feat_helper_pb2.Datum()
+
+	iter = db.RangeIter(include_value = False)
+	
+	window_num = len(list(iter))
+	print window_num
+	# while (iter = iter.next())
+
 	with db_save.begin(write=True) as in_save:
 	#ft = np.zeros((window_num, int(sys.argv[3])))
 		for im_idx in range(window_num):
@@ -34,19 +41,7 @@ def main(argv):
 			in_save.put(key_str,db.Get(key_str))
 			if (im_idx % 10000 ==0):
 				print "%d images processed." %(im_idx)
-		# if (im_idx % 500 == 0 ):
-		# 	#print np.array(datum.float_data)
-		# 	print "sample %d" %(im_idx)
-		# 	print p_ft1.max()
-		# 	#calculate p when t=1
-			
-		# 	m_ft0 = ft0.max()
-		# 	ft0 = ft0 - m_ft0
-		# 	exp_ft0 = np.exp(ft0)
-		# 	exp_ft0_s = exp_ft0.sum()
-		# 	p_ft0 = exp_ft0 / exp_ft0_s
-
-		# 	print p_ft0.max()
+		
 
 
 
