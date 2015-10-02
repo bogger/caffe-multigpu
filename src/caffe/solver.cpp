@@ -14,6 +14,7 @@
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/upgrade_proto.hpp"
+#include "caffe/messenger.hpp"
 
 namespace caffe {
 
@@ -206,6 +207,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     	}
     }
 #endif
+    Messenger::SendMessage("SOLVER_ITER_CHANGED", &iter_);
 
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
