@@ -209,6 +209,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new DummyDataLayer<Dtype>(param);
   case LayerParameter_LayerType_EUCLIDEAN_LOSS:
     return new EuclideanLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_WEIGHTED_EUCLIDEAN_LOSS:
+    return new WeightedEuclideanLossLayer<Dtype>(param);
   case LayerParameter_LayerType_ELTWISE:
     return new EltwiseLayer<Dtype>(param);
   case LayerParameter_LayerType_FLATTEN:

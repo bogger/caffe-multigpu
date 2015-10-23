@@ -492,6 +492,36 @@ class EuclideanLossLayer : public LossLayer<Dtype> {
   Blob<Dtype> diff_;
 };
 
+template <typename Dtype>
+class WeightedEuclideanLossLayer : public LossLayer<Dtype> {
+ public:
+  explicit WeightedEuclideanLossLayer(const LayerParameter& param)
+      : LossLayer<Dtype>(param), diff_(), weighted_diff_() {}
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual inline int ExactNumBottomBlobs() const { return 3; }
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_WEIGHTED_EUCLIDEAN_LOSS;
+  }
+
+  /**
+   * Unlike most loss layers, in the EuclideanLossLayer we can backpropagate
+   * to both inputs -- override to return true and always allow force_backward.
+   */
+  virtual inline bool AllowForceBackward(const int bottom_index) const {
+    return true;
+  }
+
+ protected:
+  /// @copydoc EuclideanLossLayer
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+   virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  Blob<Dtype> diff_, weighted_diff_;
+};
+
 /**
  * @brief Computes the hinge loss for a one-of-many classification task.
  *
