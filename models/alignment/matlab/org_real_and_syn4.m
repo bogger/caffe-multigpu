@@ -17,7 +17,9 @@ f_val = fopen(val_filename,'w');
 pad = 0.07;
 
 syn_im = 720;
-h_space = 6;
+h_space_data = 6;
+h_n_data = 360/h_space_data;
+h_space = 18;
 h_n = 360/h_space;
 v_space = 6;
 v_max =18;
@@ -107,8 +109,10 @@ for i=1:len
 %             view_r = floor((pose(im_id,4)+r_max)/r_space);
             view_r = mod(im_id-1,r_n);
             remainder = floor((im_id-1)/r_n);
-            view_h = mod(remainder,h_n);
-            view_v = floor(remainder / h_n);
+            
+            view_h = round(mod(remainder,h_n_data)*h_space_data/h_space);
+            view_h = mod(view_h,h_n);
+            view_v = floor(remainder / h_n_data);
             focal = pose(im_id,5);
 %             view_d = view_d_proj(view_h+1); 
             fprintf(f_train,'%s %d ',im_path,1);

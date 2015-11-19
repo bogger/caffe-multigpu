@@ -17,9 +17,7 @@ f_test = fopen(test_filename,'w');
 % f_val = fopen(val_filename,'w');
 pad = 0.07;
 param_dim = 10;
-h_space = 6;
-v_space = 6;
-r_space = 6;
+
 % view_d_proj = compute_proj(h_space,v_space,v_max,r_space,r_max);
 for i=1:len
     
