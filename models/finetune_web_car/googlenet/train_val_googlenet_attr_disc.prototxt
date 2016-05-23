@@ -1,7 +1,3 @@
-# revised by Hongyang LI
-# 2015.2.6
-# v4
-
 name: "GoogleNet"
 
 # train data
